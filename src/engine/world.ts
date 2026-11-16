@@ -1,7 +1,8 @@
 import { mulberry32 } from './rng';
 import { PREDATORS, STATS, type Species, type SpeciesStats } from './species';
+import { distanceToWater, FLAT, FOREST, generateTerrain, WATER, type TerrainSettings } from './terrain';
 
-export type State = 'wander' | 'seek' | 'graze' | 'hunt' | 'flee' | 'mate';
+export type State = 'wander' | 'seek' | 'graze' | 'hunt' | 'flee' | 'mate' | 'thirsty' | 'drink';
 
 export interface Animal {
   id: number;
@@ -12,6 +13,7 @@ export interface Animal {
   py: number;
   heading: number;
   energy: number;
+  thirst: number; // 0 to 1; dies at 1
   age: number;
   maxAge: number;
   cooldown: number;
@@ -22,25 +24,79 @@ export interface Animal {
 export interface World {
   width: number;
   height: number;
-  grass: Float32Array; // 0 to 1 per cell, row-major
+  terrain: Uint8Array; // MEADOW, FOREST, or WATER per cell, row-major
+  grass: Float32Array; // 0 to 1 per cell
+  growth: Float32Array; // regrowth multiplier per cell from terrain
+  waterDist: Float32Array; // steps to the nearest water
+  hasWater: boolean;
+  climate: Climate;
   animals: Animal[];
   tick: number;
   nextId: number;
   rand: () => number;
 }
 
-export const GRASS_REGROW = 0.001; // per tick
+export interface Climate {
+  rainfall: number; // 0 to 1; 0.5 is normal
+  seasons: number; // 0 for none, 1 for no growth in deep winter
+}
+
+export const NORMAL_CLIMATE: Climate = { rainfall: 0.5, seasons: 0 };
+export const YEAR = 4000; // ticks
+export const SEASONS = ['Spring', 'Summer', 'Autumn', 'Winter'] as const;
+
+export const GRASS_REGROW = 0.001; // per tick at normal rainfall
 export const GRASS_BITE = 0.05; // grass eaten per tick of grazing
 export const GRASS_ENERGY = 20; // energy in a full cell
 const MIN_GRASS = 0.2; // below this a cell isn't worth eating
 const BUCKET = 8; // spatial index cell size
 const CATCH_DIST = 0.5;
+const FOREST_GROWTH = 0.4;
+const FOREST_SIGHT = 1.5; // animals in forest can't be seen from further than this
+const THIRSTY = 0.5;
+const DRINK_RATE = 0.05; // thirst removed per tick of drinking
 
-export function createWorld(width: number, height: number, seed: number): World {
+export function createWorld(
+  width: number,
+  height: number,
+  seed: number,
+  terrainSettings: TerrainSettings = FLAT,
+  climate: Climate = NORMAL_CLIMATE,
+): World {
   const rand = mulberry32(seed);
+  const terrain = generateTerrain(width, height, seed, terrainSettings);
   const grass = new Float32Array(width * height);
-  for (let i = 0; i < grass.length; i++) grass[i] = 0.5 + rand() * 0.5;
-  return { width, height, grass, animals: [], tick: 0, nextId: 1, rand };
+  const growth = new Float32Array(width * height);
+  for (let i = 0; i < grass.length; i++) {
+    growth[i] = terrain[i] === WATER ? 0 : terrain[i] === FOREST ? FOREST_GROWTH : 1;
+    grass[i] = terrain[i] === WATER ? 0 : 0.75 + rand() * 0.25;
+  }
+  const waterDist = distanceToWater(width, height, terrain);
+  const hasWater = terrain.includes(WATER);
+  return { width, height, terrain, grass, growth, waterDist, hasWater, climate: { ...climate }, animals: [], tick: 0, nextId: 1, rand };
+}
+
+export function isLand(w: World, x: number, y: number): boolean {
+  return x >= 0 && y >= 0 && x < w.width && y < w.height && w.terrain[cellOf(w, x, y)] !== WATER;
+}
+
+export function randomLand(w: World): { x: number; y: number } {
+  for (;;) {
+    const x = w.rand() * w.width;
+    const y = w.rand() * w.height;
+    if (isLand(w, x, y)) return { x, y };
+  }
+}
+
+export function seasonOf(tick: number): { season: (typeof SEASONS)[number]; year: number } {
+  return { season: SEASONS[Math.floor(((tick % YEAR) / YEAR) * 4)], year: Math.floor(tick / YEAR) + 1 };
+}
+
+// Peaks mid-summer, bottoms out mid-winter.
+export function growthRate(climate: Climate, tick: number): number {
+  const phase = (tick % YEAR) / YEAR;
+  const season = Math.max(0, 1 + climate.seasons * Math.sin(2 * Math.PI * (phase - 0.125)));
+  return GRASS_REGROW * climate.rainfall * 2 * season;
 }
 
 export function addAnimal(w: World, species: Species, x: number, y: number, energy?: number): Animal {
@@ -54,6 +110,7 @@ export function addAnimal(w: World, species: Species, x: number, y: number, ener
     py: y,
     heading: w.rand() * Math.PI * 2,
     energy: energy ?? s.maxEnergy * 0.6,
+    thirst: 0,
     age: 0,
     maxAge: Math.round(s.lifespan * (0.8 + w.rand() * 0.4)),
     cooldown: 0,
@@ -76,17 +133,30 @@ export interface Census {
   tick: number;
   rabbits: number;
   foxes: number;
-  grass: number; // mean grass, 0 to 1
+  grass: number; // mean grass on land, 0 to 1
+  winter: boolean;
 }
 
 export function census(w: World): Census {
   let grass = 0;
-  for (const g of w.grass) grass += g;
-  return { tick: w.tick, rabbits: count(w, 'rabbit'), foxes: count(w, 'fox'), grass: grass / w.grass.length };
+  let land = 0;
+  for (let i = 0; i < w.grass.length; i++) {
+    if (w.terrain[i] === WATER) continue;
+    grass += w.grass[i];
+    land++;
+  }
+  return {
+    tick: w.tick,
+    rabbits: count(w, 'rabbit'),
+    foxes: count(w, 'fox'),
+    grass: land ? grass / land : 0,
+    winter: w.climate.seasons > 0 && seasonOf(w.tick).season === 'Winter',
+  };
 }
 
 export function step(w: World): void {
-  for (let i = 0; i < w.grass.length; i++) w.grass[i] = Math.min(1, w.grass[i] + GRASS_REGROW);
+  const rate = growthRate(w.climate, w.tick);
+  for (let i = 0; i < w.grass.length; i++) w.grass[i] = Math.min(1, w.grass[i] + rate * w.growth[i]);
 
   const index = buildIndex(w);
   const born: Animal[] = [];
@@ -105,10 +175,13 @@ function act(w: World, index: Index, a: Animal, born: Animal[]): void {
   a.age++;
   if (a.cooldown > 0) a.cooldown--;
   a.energy -= s.idleCost;
+  if (w.hasWater) a.thirst += s.thirstRate;
 
-  if (!tryFlee(w, index, a, s) && !tryMate(w, index, a, s, born) && !tryEat(w, index, a, s)) wander(w, a, s);
+  if (!tryFlee(w, index, a, s) && !tryDrink(w, a, s) && !tryMate(w, index, a, s, born) && !tryEat(w, index, a, s)) {
+    wander(w, a, s);
+  }
 
-  if (a.energy <= 0 || a.age >= a.maxAge) a.alive = false;
+  if (a.energy <= 0 || a.thirst >= 1 || a.age >= a.maxAge) a.alive = false;
 }
 
 function canBreed(a: Animal, s: SpeciesStats): boolean {
@@ -145,11 +218,43 @@ function tryMate(w: World, index: Index, a: Animal, s: SpeciesStats, born: Anima
 function tryFlee(w: World, index: Index, a: Animal, s: SpeciesStats): boolean {
   const predators = PREDATORS[a.species];
   if (predators.length === 0) return false;
-  const threat = nearest(index, a, s.vision, (b) => b.alive && predators.includes(b.species));
+  const threat = nearest(index, a, s.vision, (b, d) => b.alive && predators.includes(b.species) && visible(w, b, d));
   if (!threat) return false;
   a.state = 'flee';
   a.heading = Math.atan2(a.y - threat.y, a.x - threat.x) + (w.rand() - 0.5) * 0.4;
   move(w, a, s, s.speed);
+  return true;
+}
+
+function visible(w: World, b: Animal, dist: number): boolean {
+  return dist <= FOREST_SIGHT || w.terrain[cellOf(w, b.x, b.y)] !== FOREST;
+}
+
+// Keeps drinking once started until thirst is gone.
+function tryDrink(w: World, a: Animal, s: SpeciesStats): boolean {
+  if (!w.hasWater || !(a.thirst >= THIRSTY || (a.state === 'drink' && a.thirst > DRINK_RATE))) return false;
+  const cx = Math.floor(a.x);
+  const cy = Math.floor(a.y);
+  if (w.waterDist[cy * w.width + cx] <= 1) {
+    a.state = 'drink';
+    a.thirst = Math.max(0, a.thirst - DRINK_RATE);
+    return true;
+  }
+  let bx = cx;
+  let by = cy;
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const x = cx + dx;
+      const y = cy + dy;
+      if (x < 0 || y < 0 || x >= w.width || y >= w.height) continue;
+      if (w.waterDist[y * w.width + x] < w.waterDist[by * w.width + bx]) {
+        bx = x;
+        by = y;
+      }
+    }
+  }
+  a.state = 'thirsty';
+  moveToward(w, a, s, bx + 0.5, by + 0.5);
   return true;
 }
 
@@ -172,7 +277,7 @@ function tryEat(w: World, index: Index, a: Animal, s: SpeciesStats): boolean {
 }
 
 function tryHunt(w: World, index: Index, a: Animal, s: SpeciesStats, prey: Species): boolean {
-  const target = nearest(index, a, s.vision, (b) => b.alive && b.species === prey);
+  const target = nearest(index, a, s.vision, (b, d) => b.alive && b.species === prey && visible(w, b, d));
   if (!target) return false;
   a.state = 'hunt';
   if (Math.hypot(target.x - a.x, target.y - a.y) <= CATCH_DIST) {
@@ -214,21 +319,28 @@ function moveToward(w: World, a: Animal, s: SpeciesStats, tx: number, ty: number
   move(w, a, s, Math.min(s.speed, Math.hypot(tx - a.x, ty - a.y)));
 }
 
+// Bounces off map edges. Water blocks, so it tries turning to slide along the shore.
 function move(w: World, a: Animal, s: SpeciesStats, dist: number): void {
-  let x = a.x + Math.cos(a.heading) * dist;
-  let y = a.y + Math.sin(a.heading) * dist;
-  const max = 1e-6;
-  if (x < 0 || x >= w.width) {
-    a.heading = Math.PI - a.heading;
-    x = Math.min(w.width - max, Math.max(0, x));
+  const edge = 1e-6;
+  for (const turn of [0, 0.8, -0.8, 1.6, -1.6]) {
+    let heading = a.heading + turn;
+    let x = a.x + Math.cos(heading) * dist;
+    let y = a.y + Math.sin(heading) * dist;
+    if (x < 0 || x >= w.width) {
+      heading = Math.PI - heading;
+      x = Math.min(w.width - edge, Math.max(0, x));
+    }
+    if (y < 0 || y >= w.height) {
+      heading = -heading;
+      y = Math.min(w.height - edge, Math.max(0, y));
+    }
+    if (w.terrain[cellOf(w, x, y)] === WATER) continue;
+    a.heading = heading;
+    a.x = x;
+    a.y = y;
+    a.energy -= dist * s.moveCost;
+    return;
   }
-  if (y < 0 || y >= w.height) {
-    a.heading = -a.heading;
-    y = Math.min(w.height - max, Math.max(0, y));
-  }
-  a.x = x;
-  a.y = y;
-  a.energy -= dist * s.moveCost;
 }
 
 interface Index {
@@ -247,11 +359,11 @@ function buildIndex(w: World): Index {
   return { cols, rows, buckets };
 }
 
-function nearest(index: Index, a: Animal, r: number, match: (b: Animal) => boolean): Animal | null {
+function nearest(index: Index, a: Animal, r: number, match: (b: Animal, dist: number) => boolean): Animal | null {
   let best: Animal | null = null;
   let bestDist = Infinity;
   forEachNear(index, a, r, (b, d) => {
-    if (d < bestDist && match(b)) {
+    if (d < bestDist && match(b, d)) {
       bestDist = d;
       best = b;
     }

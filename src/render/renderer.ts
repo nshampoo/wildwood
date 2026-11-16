@@ -1,7 +1,11 @@
+import { FOREST, WATER } from '../engine/terrain';
 import type { World } from '../engine/world';
 
 const BARE = [139, 111, 71];
 const LUSH = [76, 140, 58];
+const FOREST_BARE = [92, 84, 56];
+const FOREST_LUSH = [38, 92, 48];
+const WATER_RGB = [58, 108, 158];
 const COLORS = { rabbit: '#f4f1e8', fox: '#d95926' };
 
 export const CELL_PX = 8;
@@ -21,9 +25,9 @@ export function createRenderer(canvas: HTMLCanvasElement, world: World) {
   return function draw(w: World, alpha: number) {
     for (let i = 0; i < w.grass.length; i++) {
       const g = w.grass[i];
-      pixels.data[i * 4] = BARE[0] + (LUSH[0] - BARE[0]) * g;
-      pixels.data[i * 4 + 1] = BARE[1] + (LUSH[1] - BARE[1]) * g;
-      pixels.data[i * 4 + 2] = BARE[2] + (LUSH[2] - BARE[2]) * g;
+      const t = w.terrain[i];
+      const [bare, lush] = t === WATER ? [WATER_RGB, WATER_RGB] : t === FOREST ? [FOREST_BARE, FOREST_LUSH] : [BARE, LUSH];
+      for (let c = 0; c < 3; c++) pixels.data[i * 4 + c] = bare[c] + (lush[c] - bare[c]) * g;
       pixels.data[i * 4 + 3] = 255;
     }
     groundCtx.putImageData(pixels, 0, 0);

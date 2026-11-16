@@ -16,6 +16,7 @@ export interface SpeciesStats {
   babyEnergy: number;
   lifespan: number; // ticks, varied +-20% per animal
   idleCost: number; // energy per tick
+  thirstRate: number; // thirst per tick; dies at 1
   moveCost: number; // energy per cell moved
 }
 
@@ -36,6 +37,7 @@ export const STATS: Record<Species, SpeciesStats> = {
     babyEnergy: 15,
     lifespan: 3000,
     idleCost: 0.12,
+    thirstRate: 1 / 800,
     moveCost: 0.8,
   },
   fox: {
@@ -54,6 +56,7 @@ export const STATS: Record<Species, SpeciesStats> = {
     babyEnergy: 40,
     lifespan: 6000,
     idleCost: 0.1,
+    thirstRate: 1 / 1200,
     moveCost: 0.5,
   },
 };
