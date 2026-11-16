@@ -35,3 +35,4 @@ Builds the app, then deploys the `WildwoodSite` stack: a private S3 bucket behin
 | `index.html` | Page and styles |
 | `infra/` | CDK stack (S3 + CloudFront) |
 | `docs/DESIGN.md` | Design and plan |
+| `docs/RESEARCH.md` | Real-animal research behind the species |

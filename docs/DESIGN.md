@@ -112,7 +112,23 @@ Dependencies: `vite`, `typescript`, `vitest`, all dev only.
 
 S3 storage and CloudFront for a small static site are cents per month. No backend.
 
-## Decided
+## Proposed: more species (not started, waiting for sign-off)
+
+Based on [RESEARCH.md](RESEARCH.md). Added in steps so each can be tuned on its own:
+
+1. **Voles.** Small, fast-breeding grazers. Foxes eat them as well as rabbits, and switch to whichever is plentiful.
+2. **Hawks.** Fly (ignore water), hunt voles and some rabbits in open ground, can't see into forest.
+3. **Deer and coyotes.** Deer compete with rabbits for grass and breed slowly. Coyotes hunt rabbits, voles, and fawns, and sometimes foxes; foxes flee coyotes.
+
+Engine changes this needs:
+
+- Diet becomes a list of prey with preferences. Predators of each species are derived from diets.
+- Meal size moves from the predator to the prey (a vole is worth less than a rabbit).
+- A `flies` flag (ignores water, sees over terrain but not into forest).
+- Deer fawns: young animals that are easier prey until grown.
+- The chart gets one panel per species. Past three, the panels' labels carry identity, not just color.
+
+
 
 - 2026-11-16: Name is Wildwood.
 - 2026-11-16: Rabbits, foxes, and grass to start.
