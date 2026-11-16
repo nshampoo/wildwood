@@ -112,23 +112,26 @@ Dependencies: `vite`, `typescript`, `vitest`, all dev only.
 
 S3 storage and CloudFront for a small static site are cents per month. No backend.
 
-## Proposed: more species (not started, waiting for sign-off)
+## Proposed: home ranges, deer, coyotes, and scavenging (waiting for sign-off)
 
-Based on [RESEARCH.md](RESEARCH.md). Added in steps so each can be tuned on its own:
+Based on [RESEARCH.md](RESEARCH.md). In steps, each tuned and stability-checked on its own:
 
-1. **Voles.** Small, fast-breeding grazers. Foxes eat them as well as rabbits, and switch to whichever is plentiful.
-2. **Hawks.** Fly (ignore water), hunt voles and some rabbits in open ground, can't see into forest.
-3. **Deer and coyotes.** Deer compete with rabbits for grass and breed slowly. Coyotes hunt rabbits, voles, and fawns, and sometimes foxes; foxes flee coyotes.
+1. **Home ranges and dispersal** for rabbits and foxes. Each animal has a home point (birthplace or where it was placed) and a range radius; wandering past the edge drifts it back. Young foxes leave home once at maturity and head toward areas with fewer foxes, then settle there. Fixes foxes wandering off and dying alone, the way real resident animals avoid it.
+2. **Deer and scavenging.** Deer graze, prefer forest edges, and breed slowly (one or two fawns). Does stay near their group's lead doe, so herds form. A dead deer leaves a carcass with a lot of food that rots over a few days; foxes (and later coyotes) smell it from far off and share it. Rabbits stay a single meal.
+3. **Coyotes.** Packs share one home range. They hunt rabbits alone, but need packmates nearby to take a fawn, and the pack shares the carcass. Foxes flee coyotes, so coyotes push foxes off carcasses. Young coyotes disperse like foxes.
 
 Engine changes this needs:
 
-- Diet becomes a list of prey with preferences. Predators of each species are derived from diets.
-- Meal size moves from the predator to the prey (a vole is worth less than a rabbit).
-- A `flies` flag (ignores water, sees over terrain but not into forest).
-- Deer fawns: young animals that are easier prey until grown.
-- The chart gets one panel per species. Past three, the panels' labels carry identity, not just color.
+- Diet becomes a list of prey. Predators of each species are derived from diets.
+- Meal size moves from the predator to the prey.
+- Home point, range radius, and a dispersal flag per animal.
+- Carcasses as a new kind of thing in the world, with food that decays.
+- Fawns: young deer that are easier prey until grown.
+- The chart gets a panel per species; panel labels carry identity once there are more than three.
 
+Dropped: voles (mostly "smaller rabbits" in a sim; deer and coyotes give predators a second food source anyway) and hawks.
 
+## Decided
 
 - 2026-11-16: Name is Wildwood.
 - 2026-11-16: Rabbits, foxes, and grass to start.

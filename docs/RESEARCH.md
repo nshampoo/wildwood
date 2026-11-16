@@ -20,14 +20,24 @@ Real-world numbers for candidate species, and what each could mean for the sim. 
 
 **Coyotes vs foxes.** Coyotes dominate and sometimes kill red foxes (intraguild predation). Foxes cope by avoiding coyotes in space and time, not by strict territories. The effect varies by region; some studies find none. [Newsome & Ripple 2015](https://thomasnewsome.com/wp-content/uploads/2013/09/newsome_ripple_journal-of-animal-ecology_2015.pdf), [PMC9251843](https://pmc.ncbi.nlm.nih.gov/articles/PMC9251843)
 
+## Social life and movement
+
+- **Cottontails** are solitary and intolerant of other adults; ranges overlap without bonding. [ESF](https://www.esf.edu/aec/adks/mammals/cottontail.php), [ADW](https://animaldiversity.org/accounts/Sylvilagus_floridanus/)
+- **Red foxes** live as a breeding pair, sometimes with subordinate females, and hunt alone. Kits disperse in fall, males farther, and dispersal is risky. [USFS FEIS](https://research.fs.usda.gov/feis/species-reviews/vuvu), [Wildlife Online](https://www.wildlifeonline.me.uk/animals/article/red-fox-behaviour-dispersal)
+- **Coyotes** are about half residents in pack territories (around 10 mi²) and half transients, young loners covering up to 100 mi² looking for a vacancy. A transient fills a dead resident's territory within weeks. [Outdoor Life](https://www.outdoorlife.com/blogs/game-changers/coyote-study-reveals-half-canines-are-residents-half-are-transients.md), [Wildlife Biology](https://bioone.org/journals/Wildlife-Biology/volume-2017/issue-4/wlb.00335/The-dynamic-nature-of-territoriality-transience-and-biding-in-an/10.2981/wlb.00335.pdf)
+- **Deer** does live in matriarchal family groups with one dominant doe; bucks are loners or in loose bachelor groups. In winter they gather in yards for shelter, which strips the food there. [Nelson & Sargeant 2008](https://canadianfieldnaturalist.ca/index.php/cfn/article/download/602/603/2406), [Montana State](https://animalrangeextension.montana.edu/wildlife/private_land_wildlife_mgmt/whitetail-mgmt.html)
+- **Carrion** was 25% of one coyote population's diet, and much of the deer coyotes eat is scavenged. [ADW](https://animaldiversity.org/site/accounts/information/Canis_latrans.html), [NC State](https://news.ncsu.edu/?p=237271)
+
+The pattern: what keeps real animals alive isn't packs but home ranges. Residents stay where they know the food and cover; only dispersing young take the risky trip.
+
 ## A benchmark: snowshoe hare and lynx
 
 The classic real cycle. Lynx peaks follow hare peaks by 1 to 3 years, and the cycle repeats every 8 to 11 years. Hares keep cycling even with lynx removed or extra food, so food and climate matter too, not just predators. Our rabbit and fox peaks should show the same lag. [Krebs et al.](https://www.zoology.ubc.ca/~krebs/papers/180.pdf), [NWT](https://www.gov.nt.ca/ecc/en/services/lynx/lynx-snowshoe-hare-cycle)
 
 ## What it means for the sim
 
-- **Foxes should eat voles too.** Real foxes eat mostly rodents. A predator that switches to whatever prey is plentiful damps crashes ("prey switching" is a known stabilizer), so voles could make the whole system steadier.
-- **Hawks fit the forest rule.** They hunt open ground from forest edges, so forest cover protects prey from hawks even more than from foxes. Flying, they ignore water.
-- **Prey size should set the reward.** Today a fox's meal size is a fox stat. With several prey, it belongs to the prey: a vole is a snack, a rabbit a meal, a fawn a feast.
+- **Home ranges, not random walks.** Animals with nothing in sight should drift back toward home instead of wandering off.
+- **Prey size should set the reward.** A rabbit is a meal; a deer carcass feeds several foxes or a coyote pack for days.
+- **Second food sources stabilize.** Predators that can switch prey, or scavenge winter-killed deer, ride out crashes in their main prey.
 - **Coyotes add a second layer.** They hunt the same prey as foxes and occasionally foxes themselves, so foxes should flee coyotes.
 - **Deer compete with rabbits for food** and are slow breeders, so they'd drift on a slower cycle than rabbits.
