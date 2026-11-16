@@ -119,7 +119,7 @@ S3 storage and CloudFront for a small static site are cents per month. No backen
 Based on [RESEARCH.md](RESEARCH.md). In steps, each tuned and stability-checked on its own:
 
 1. **Scent fields** instead of fixed home ranges (done). Foxes drift toward rabbits, rabbits away from foxes, and animals ready to breed toward their own kind, so a lone fox no longer wanders off and dies.
-2. **Deer and scavenging.** Deer graze, prefer forest edges, and breed slowly (one or two fawns). Deer flock (stay near nearby deer), so herds form. A dead deer leaves a carcass with a lot of food that rots over a few days; foxes (and later coyotes) smell it from far off and share it. Rabbits stay a single meal.
+2. **Deer and scavenging** (done, tuning). Deer eat browse, a second plant layer that grows only in forest, and breed slowly (one fawn a year, mature at 1500 ticks). They flock, so herds form. A dead deer leaves a carcass worth 400 energy that rots over about 2700 ticks; foxes smell it from 25 cells and share it. Rabbits stay a single meal.
 3. **Coyotes.** Packs flock together. They hunt rabbits alone, but need packmates nearby to take a fawn, and the pack shares the carcass. Foxes flee coyotes, so coyotes push foxes off carcasses. Young coyotes disperse like foxes.
 
 Engine changes this needs:
@@ -145,6 +145,10 @@ Dropped: voles (mostly "smaller rabbits" in a sim; deer and coyotes give predato
 - 2026-11-16: Water is a resource. Animals get thirsty and walk to water to drink (phase 3).
 - 2026-11-16: No temperature slider for now. Climate sliders change live; terrain sliders apply on New world.
 - 2026-11-16: Presets plus Randomize. Presets are measured for stability, not hand-waved. Dropped a planned "Too much of a good thing" preset.
+- 2026-11-16: Deer eat only browse. When they also grazed, they stripped the meadows, rabbits moved into the forest to eat, and foxes starved next to rabbits they couldn't see.
+- 2026-11-16: Rabbits have no maturity delay (it halved rabbits on dry maps and starved foxes); foxes mature at 800 ticks, deer at 1500. Placed animals start as adults. Bigger fox litters made crashes worse, so litters stay at 1.
+- 2026-11-16: Grass growth stays as is. Faster regrowth (1.3x, 1.6x) gave more rabbits and deer but bigger fox swings, the paradox of enrichment.
+- 2026-11-16: Held-out survival with scent alone: 9, 10, 9, 6 of 10.
 - 2026-11-16: Scent fields over fixed home ranges or memory: one rule covers food, fear, and finding mates, and it can be shown on the map. Flocking only for deer and coyotes, the real pack animals. On the tuning seeds, survival rose to 10, 10, 9, and 8 of 10 (Balanced, Lake, Watering hole, Harsh winters), from about 9.5, 8, 8, and 5.
 - 2026-11-16: Balanced meadow overfit: 9/10 on its tuning seeds, 5/10 on held-out ones. Many small forest patches (patchiness 0.7) fixed it: 19/20 tuning, 10/10 held out.
 - 2026-11-16: Dropped history replay and shareable links. Shipped to shampoe.com/wildwood/ (WildwoodSite stack, CloudFront d1mfvy64vj80p6.cloudfront.net).
