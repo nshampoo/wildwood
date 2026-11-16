@@ -79,6 +79,59 @@
         pointer-events: none;
         white-space: nowrap;
       }
+      .controls {
+        display: grid;
+        gap: 14px;
+        margin-top: 16px;
+        padding: 12px;
+        background: #262b23;
+        border-radius: 6px;
+      }
+      .controls h2 {
+        margin: 0 0 6px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #a3a89c;
+      }
+      .controls label {
+        display: grid;
+        grid-template-columns: 84px 1fr 40px;
+        align-items: center;
+        gap: 8px;
+        margin: 4px 0;
+      }
+      .controls label span:last-child {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        color: #a3a89c;
+      }
+      .controls input[type='range'] {
+        width: 100%;
+        accent-color: #4c8c3a;
+      }
+      select {
+        width: 100%;
+        background: #2f362b;
+        color: inherit;
+        border: 1px solid #4a5444;
+        border-radius: 6px;
+        padding: 4px 6px;
+        font: inherit;
+      }
+      .note {
+        margin: 6px 0 0;
+        color: #a3a89c;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 6px;
+      }
       .place {
         display: flex;
         align-items: center;
@@ -95,7 +148,6 @@
       <button data-speed="1" class="active">1x</button>
       <button data-speed="5">5x</button>
       <button data-speed="20">20x</button>
-      <button id="reset">New world</button>
       <span id="stats"></span>
     </header>
     <main>
@@ -107,10 +159,35 @@
           <button data-place="fox">Fox</button>
         </div>
       </div>
-      <div class="chart-wrap">
-        <canvas id="chart" aria-label="Population over time"></canvas>
-        <div id="chart-tooltip" hidden></div>
-      </div>
+      <aside>
+        <div class="chart-wrap">
+          <canvas id="chart" aria-label="Population over time"></canvas>
+          <div id="chart-tooltip" hidden></div>
+        </div>
+        <div class="controls">
+          <section>
+            <h2>Preset</h2>
+            <select id="preset"></select>
+            <p class="note" id="preset-watch"></p>
+          </section>
+          <section>
+            <h2>World</h2>
+            <label><span>Water</span><input id="water" type="range" /><span id="water-value"></span></label>
+            <label><span>Forest</span><input id="forest" type="range" /><span id="forest-value"></span></label>
+            <label><span>Patchiness</span><input id="patchiness" type="range" /><span id="patchiness-value"></span></label>
+            <div class="row">
+              <button id="new-world">New world</button>
+              <button id="randomize">Randomize</button>
+              <span class="note" id="world-hint" hidden>Applies on New world</span>
+            </div>
+          </section>
+          <section>
+            <h2>Climate <span style="text-transform: none; letter-spacing: 0; font-weight: 400">(live)</span></h2>
+            <label><span>Rainfall</span><input id="rainfall" type="range" /><span id="rainfall-value"></span></label>
+            <label><span>Seasons</span><input id="seasons" type="range" /><span id="seasons-value"></span></label>
+          </section>
+        </div>
+      </aside>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

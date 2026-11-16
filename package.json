@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "stability": "STABILITY=1 vitest run src/engine/presets.test.ts"
   },
   "devDependencies": {
     "typescript": "^7.0.2",

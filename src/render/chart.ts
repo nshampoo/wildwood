@@ -12,6 +12,7 @@ const INK = '#e8e6df';
 const MUTED = '#8d9386';
 const GRID = '#3a4135';
 const SURFACE = '#262b23';
+const WINTER = 'rgba(160, 190, 230, 0.08)';
 const PAD_X = 12;
 const GUTTER = 40; // y-axis labels
 const TITLE_H = 22;
@@ -45,6 +46,11 @@ export function createChart(canvas: HTMLCanvasElement, tooltip: HTMLElement) {
     const xAt = (i: number) => plotLeft + (n < 2 ? 0 : (i / (n - 1)) * plotW);
     const hover = hoverX === null || n === 0 ? null : Math.max(0, Math.min(n - 1, Math.round(((hoverX - plotLeft) / plotW) * (n - 1))));
     const shown = hover ?? n - 1;
+
+    ctx.fillStyle = WINTER;
+    for (let i = 0; i < n - 1; i++) {
+      if (samples[i].winter) ctx.fillRect(xAt(i), 0, xAt(i + 1) - xAt(i) + 0.5, HEIGHT - AXIS_H);
+    }
 
     ctx.font = '12px system-ui, sans-serif';
     ctx.textBaseline = 'middle';
@@ -105,6 +111,10 @@ export function createChart(canvas: HTMLCanvasElement, tooltip: HTMLElement) {
     if (n > 0) {
       ctx.textAlign = 'right';
       ctx.fillText(`Day ${day(samples[n - 1])}`, width - PAD_X, HEIGHT - AXIS_H / 2);
+    }
+    if (samples.some((c) => c.winter)) {
+      ctx.textAlign = 'center';
+      ctx.fillText('shaded: winter', plotLeft + plotW / 2, HEIGHT - AXIS_H / 2);
     }
 
     if (hover === null) {
