@@ -1,5 +1,5 @@
 import { SCENT_CELL } from '../engine/scent';
-import type { Species } from '../engine/species';
+import { STATS, type Species } from '../engine/species';
 import { FOREST, WATER } from '../engine/terrain';
 import type { World } from '../engine/world';
 
@@ -8,10 +8,12 @@ const LUSH = [76, 140, 58];
 const FOREST_BARE = [92, 84, 56];
 const FOREST_LUSH = [38, 92, 48];
 const WATER_RGB = [58, 108, 158];
-const COLORS = { rabbit: '#f4f1e8', fox: '#d95926' };
-const SCENT_RGB: Record<Species, string> = { rabbit: '244, 241, 232', fox: '217, 89, 38' }; // same as the dots
+const COLORS: Record<Species, string> = { rabbit: '#f4f1e8', fox: '#d95926', deer: '#b98a5e' };
+const CARCASS = '#5a2a22';
+const SCENT_RGB: Record<Species, string> = { rabbit: '244, 241, 232', fox: '217, 89, 38', deer: '185, 138, 94' }; // same as the dots
 
 export const CELL_PX = 8;
+const RADIUS: Record<Species, number> = { rabbit: 0.35, fox: 0.4, deer: 0.5 };
 
 export function createRenderer(canvas: HTMLCanvasElement, world: World) {
   const ctx = canvas.getContext('2d')!;
@@ -38,6 +40,12 @@ export function createRenderer(canvas: HTMLCanvasElement, world: World) {
     ctx.drawImage(ground, 0, 0, canvas.width, canvas.height);
     if (scent) drawScent(ctx, w, scent);
 
+    ctx.fillStyle = CARCASS;
+    for (const c of w.carcasses) {
+      const r = CELL_PX * (0.25 + 0.35 * Math.min(1, c.meat / 400));
+      ctx.fillRect(c.x * CELL_PX - r, c.y * CELL_PX - r, r * 2, r * 2);
+    }
+
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.lineWidth = 1;
     for (const a of w.animals) {
@@ -45,7 +53,7 @@ export function createRenderer(canvas: HTMLCanvasElement, world: World) {
       const y = (a.py + (a.y - a.py) * alpha) * CELL_PX;
       ctx.fillStyle = COLORS[a.species];
       ctx.beginPath();
-      ctx.arc(x, y, CELL_PX * 0.35, 0, Math.PI * 2);
+      ctx.arc(x, y, CELL_PX * RADIUS[a.species] * (a.age < STATS[a.species].maturity ? 0.7 : 1), 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
     }

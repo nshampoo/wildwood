@@ -10,7 +10,7 @@ const WIDTH = 120;
 const HEIGHT = 80;
 const TICK_MS = 100; // 10 ticks per second at 1x
 const MAX_STEPS_PER_FRAME = 50;
-const CUSTOM_START: Record<Species, number> = { rabbit: 40, fox: 6 };
+const CUSTOM_START: Record<Species, number> = { rabbit: 40, fox: 6, deer: 12 };
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
 const canvas = $<HTMLCanvasElement>('#map');
@@ -105,7 +105,7 @@ function frame(now: number) {
   const c = census(world);
   const { season, year } = seasonOf(world.tick);
   const when = world.climate.seasons > 0 ? `${season}, year ${year}` : `Day ${Math.floor(world.tick / TICKS_PER_DAY)}`;
-  stats.textContent = `${when} · ${c.rabbits} rabbits · ${c.foxes} foxes`;
+  stats.textContent = `${when} · ${c.rabbit} rabbits · ${c.fox} foxes · ${c.deer} deer`;
   requestAnimationFrame(frame);
 }
 

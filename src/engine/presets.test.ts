@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PRESETS } from './presets';
-import type { Species } from './species';
+import { SPECIES, type Species } from './species';
 import { addAnimal, census, createWorld, randomLand, step } from './world';
 
 declare const process: { env: Record<string, string | undefined> };
@@ -27,7 +27,7 @@ function survives(preset: (typeof PRESETS)[number], seed: number): boolean {
     step(w);
     if (t % 100 === 0) {
       const c = census(w);
-      if (c.rabbits === 0 || c.foxes === 0) return false;
+      if (SPECIES.some((sp) => c[sp] === 0)) return false;
     }
   }
   return true;
@@ -35,7 +35,7 @@ function survives(preset: (typeof PRESETS)[number], seed: number): boolean {
 
 describe.skipIf(!process.env.STABILITY)('preset stability', () => {
   for (const preset of PRESETS) {
-    it(`${preset.name} keeps both species for ${TICKS} ticks`, () => {
+    it(`${preset.name} keeps every species for ${TICKS} ticks`, () => {
       let alive = 0;
       for (let seed = 1001; seed < 1001 + SEEDS; seed++) if (survives(preset, seed)) alive++;
       console.log(`${preset.name}: ${alive}/${SEEDS}`);

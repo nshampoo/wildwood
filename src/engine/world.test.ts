@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { mulberry32 } from './rng';
 import { STATS } from './species';
 import { FOREST, WATER } from './terrain';
-import { addAnimal, cellOf, count, createWorld, GRASS_REGROW, growthRate, step, YEAR, type World } from './world';
+import { addAnimal, cellOf, count, createWorld, GRASS_REGROW, growthRate, step, YEAR, type Animal, type World } from './world';
+
+function adult(a: Animal): Animal {
+  a.age = STATS[a.species].maturity;
+  return a;
+}
 
 // A flat world with a column of water at x = 0.
 function withLake(w: World): World {
@@ -74,8 +79,8 @@ describe('rabbits', () => {
 
   it('breed when two well-fed rabbits meet', () => {
     const w = createWorld(10, 10, 1);
-    addAnimal(w, 'rabbit', 5, 5, 45);
-    addAnimal(w, 'rabbit', 5.5, 5, 45);
+    adult(addAnimal(w, 'rabbit', 5, 5, 45));
+    adult(addAnimal(w, 'rabbit', 5.5, 5, 45));
     step(w);
     expect(count(w, 'rabbit')).toBe(3);
     expect(w.animals[0].cooldown).toBeGreaterThan(0);
@@ -114,8 +119,8 @@ describe('foxes', () => {
   it("breed in open territory but not a crowded one", () => {
     const pair = (crowded: boolean) => {
       const w = createWorld(40, 40, 1);
-      addAnimal(w, 'fox', 20, 20, 100);
-      addAnimal(w, 'fox', 20.5, 20, 100);
+      adult(addAnimal(w, 'fox', 20, 20, 100));
+      adult(addAnimal(w, 'fox', 20.5, 20, 100));
       if (crowded) addAnimal(w, 'fox', 25, 20, 10).cooldown = 1000;
       step(w);
       return count(w, 'fox');
@@ -205,6 +210,50 @@ describe('scent', () => {
 
   it('rabbits drift away from fox scent', () => {
     expect(drift('rabbit', 'fox')).toBeLessThan(-2);
+  });
+});
+
+describe('deer', () => {
+  it('leave a carcass that foxes eat from', () => {
+    const w = createWorld(20, 20, 1);
+    w.grass.fill(0);
+    addAnimal(w, 'deer', 10, 10).energy = 0.01;
+    const fox = addAnimal(w, 'fox', 18, 10, 50);
+    step(w);
+    expect(count(w, 'deer')).toBe(0);
+    expect(w.carcasses).toHaveLength(1);
+    for (let i = 0; i < 100 && fox.state !== 'scavenge'; i++) step(w);
+    const before = fox.energy;
+    for (let i = 0; i < 60; i++) step(w);
+    expect(fox.state).toBe('scavenge');
+    expect(fox.energy).toBeGreaterThan(before);
+    expect(w.carcasses[0].meat).toBeLessThan(STATS.deer.meat);
+  });
+
+  it('carcasses rot away', () => {
+    const w = createWorld(10, 10, 1);
+    w.carcasses.push({ x: 5, y: 5, meat: 1 });
+    for (let i = 0; i < 10; i++) step(w);
+    expect(w.carcasses).toHaveLength(0);
+  });
+
+  it("young animals can't breed", () => {
+    const w = createWorld(10, 10, 1);
+    addAnimal(w, 'deer', 5, 5, 190).age = 0;
+    addAnimal(w, 'deer', 5.5, 5, 190).age = 0;
+    step(w);
+    expect(count(w, 'deer')).toBe(2);
+  });
+
+  it('flock toward nearby deer', () => {
+    const w = createWorld(40, 20, 1);
+    w.grass.fill(0);
+    const loner = addAnimal(w, 'deer', 10, 10, 190);
+    loner.heading = Math.PI; // facing away from the herd
+    for (let i = 0; i < 4; i++) addAnimal(w, 'deer', 16, 9 + i * 0.5, 190).cooldown = 10000;
+    loner.cooldown = 10000;
+    for (let i = 0; i < 40; i++) step(w);
+    expect(loner.x).toBeGreaterThan(10);
   });
 });
 
