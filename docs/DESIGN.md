@@ -15,7 +15,7 @@ None. Everything is generated from a seed and the lever settings.
 ### World
 
 - A grid of cells (start around 120 x 80). Each cell has a terrain type and a grass amount (0 to 1).
-- Terrain: meadow (grass grows), forest (slow grass, easier to hide), water (impassable; animals drink nearby later if we add thirst).
+- Terrain: meadow (grass grows), forest (slow grass, easier to hide), water (impassable, and animals must drink from it).
 - Terrain comes from seeded value noise so it looks natural.
 - Grass regrows each tick at a rate set by rainfall, temperature, and season.
 
@@ -43,6 +43,8 @@ Each tick an animal picks the first state that applies:
 
 It burns energy every tick (more when moving, more in extreme temperatures) and ages. It dies at zero energy, at old age, or when eaten.
 
+From phase 3, animals also have thirst. It rises each tick, and a thirsty animal walks to the nearest water to drink (a Drink state between Flee and Eat). It dies of thirst at the max.
+
 ### Levers
 
 Rainfall, temperature, season length, terrain roughness, water level, map seed, and a Randomize button. Click on the map to place rabbits or foxes.
@@ -63,24 +65,24 @@ Rainfall, temperature, season length, terrain roughness, water level, map seed, 
   2. Shapes with facing direction and state cues (hunger, fleeing).
   3. Pixel sprites with walk animations.
 
-## Stack (proposed)
+## Stack
 
 | Choice | What | Why |
 | --- | --- | --- |
 | Engine | Pure TypeScript in `src/engine/`, no DOM | Testable, could move to a Web Worker later |
 | Tests | Vitest | Engine rules ("a fox next to a rabbit eats it") |
-| UI | Plain TypeScript and DOM for the controls, Canvas 2D for the map | A few sliders and buttons don't need React |
+| UI | Plain TypeScript and DOM for the controls, Canvas 2D for the map | A few sliders and buttons don't need React. A sprite renderer is still canvas drawing, so React only helps if the controls get rich |
 | Build | Vite | Dev server and static build |
 | Chart | Hand-drawn on a small canvas | Three lines don't need a library |
 | Hosting | S3 + CloudFront via CDK in `infra/` | Static site, near-zero cost |
 
-New dependencies: `vite`, `typescript`, `vitest` (dev only).
+Dependencies: `vite`, `typescript`, `vitest`, all dev only.
 
 ## Plan
 
 1. Grass and rabbits: grid, regrowth, rabbit state machine, dot renderer with interpolation.
 2. Foxes: hunting and fleeing, population chart. Tune for cycles.
-3. World levers: noise terrain, sliders, randomize, click to place.
+3. World levers: noise terrain, water and thirst, sliders, randomize, click to place.
 4. Watching polish: follow an animal, pan and zoom, speed controls.
 5. Ship to shampoe.com.
 6. Art: state cues, then pixel sprites.
@@ -97,9 +99,11 @@ S3 storage and CloudFront for a small static site are cents per month. No backen
 - 2026-11-16: No evolution. Fixed stats per species; populations drive the dynamics.
 - 2026-11-16: Agent-based animals you can watch, on a grid world.
 - 2026-11-16: Visual style starts as dots and works up to pixel sprites.
+- 2026-11-16: Sandbox only. Goal scenarios are a stretch item.
+- 2026-11-16: Stack and dependencies above approved. No React.
+- 2026-11-16: Water is a resource. Animals get thirsty and walk to water to drink (phase 3).
+- 2026-11-16: Phase 1 tuning: 20 rabbits on a 120 x 80 map overshoot to ~1,270, then settle near 930 with grass at ~25%. About 0.5 ms per tick at that size.
 
 ## Open decisions
 
-- Sandbox only, or add goal scenarios later? Leaning sandbox for v1.
-- Stack and dependencies above need sign-off.
-- Thirst and water as a resource, or water as terrain only?
+- Where the pixel sprite art comes from: hand-drawn, a free-licensed pack, or generated.

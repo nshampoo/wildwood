@@ -6,7 +6,12 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the model and plan.
 
 ## Develop
 
-Not started yet. The design is waiting for sign-off.
+```
+npm install
+npm test
+npm run dev     # local server with hot reload
+npm run build   # type check and static build into dist/
+```
 
 ## Deploy
 
@@ -14,4 +19,8 @@ Not set up yet.
 
 | Path | What |
 | --- | --- |
+| `src/engine/` | Simulation: world, grass, animals, seeded RNG (pure TypeScript, no DOM) |
+| `src/render/` | Canvas renderer |
+| `src/main.ts` | Game loop and controls |
+| `index.html` | Page and styles |
 | `docs/DESIGN.md` | Design and plan |
