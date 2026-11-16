@@ -1,5 +1,6 @@
 import { mulberry32 } from './rng';
-import { PREDATORS, STATS, type Species, type SpeciesStats } from './species';
+import { createScent, deposit, scentHeading, spread, type ScentField } from './scent';
+import { PREDATORS, SPECIES, STATS, type Species, type SpeciesStats } from './species';
 import { distanceToWater, FLAT, FOREST, generateTerrain, WATER, type TerrainSettings } from './terrain';
 
 export type State = 'wander' | 'seek' | 'graze' | 'hunt' | 'flee' | 'mate' | 'thirsty' | 'drink';
@@ -30,6 +31,7 @@ export interface World {
   waterDist: Float32Array; // steps to the nearest water
   hasWater: boolean;
   climate: Climate;
+  scent: ScentField;
   animals: Animal[];
   tick: number;
   nextId: number;
@@ -55,6 +57,8 @@ const FOREST_GROWTH = 0.4;
 const FOREST_SIGHT = 1.5; // animals in forest can't be seen from further than this
 const THIRSTY = 0.5;
 const DRINK_RATE = 0.05; // thirst removed per tick of drinking
+const SCENT_TURN = 0.25; // max radians per tick a wandering animal turns toward its scent heading
+const MATE_SCENT = 1; // pull toward its own kind's scent when ready to breed
 
 export function createWorld(
   width: number,
@@ -73,7 +77,8 @@ export function createWorld(
   }
   const waterDist = distanceToWater(width, height, terrain);
   const hasWater = terrain.includes(WATER);
-  return { width, height, terrain, grass, growth, waterDist, hasWater, climate: { ...climate }, animals: [], tick: 0, nextId: 1, rand };
+  const scent = createScent(width, height, SPECIES);
+  return { width, height, terrain, grass, growth, waterDist, hasWater, climate: { ...climate }, scent, animals: [], tick: 0, nextId: 1, rand };
 }
 
 export function isLand(w: World, x: number, y: number): boolean {
@@ -157,6 +162,9 @@ export function census(w: World): Census {
 export function step(w: World): void {
   const rate = growthRate(w.climate, w.tick);
   for (let i = 0; i < w.grass.length; i++) w.grass[i] = Math.min(1, w.grass[i] + rate * w.growth[i]);
+
+  for (const a of w.animals) deposit(w.scent, a.species, a.x, a.y);
+  spread(w.scent);
 
   const index = buildIndex(w);
   const born: Animal[] = [];
@@ -308,8 +316,15 @@ function bestGrass(w: World, a: Animal, r: number): { x: number; y: number } | n
   return best;
 }
 
+// A random walk, steered by scent: toward food, away from predators, toward mates when ready.
 function wander(w: World, a: Animal, s: SpeciesStats): void {
   a.state = 'wander';
+  const weights = canBreed(a, s) ? { ...s.scent, [a.species]: (s.scent[a.species] ?? 0) + MATE_SCENT } : s.scent;
+  const target = scentHeading(w.scent, weights, a.x, a.y);
+  if (target !== null) {
+    const diff = Math.atan2(Math.sin(target - a.heading), Math.cos(target - a.heading));
+    a.heading += Math.max(-SCENT_TURN, Math.min(SCENT_TURN, diff));
+  }
   a.heading += (w.rand() - 0.5) * 0.6;
   move(w, a, s, s.speed * 0.6);
 }

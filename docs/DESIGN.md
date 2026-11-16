@@ -46,6 +46,8 @@ Each tick an animal picks the first state that applies (foxes hunt instead of gr
 
 It burns energy every tick (more when moving, more in extreme temperatures) and ages. It dies at zero energy, at old age, or when eaten.
 
+Animals leave scent wherever they go, one layer per species, on a coarse grid (4x4 map cells per scent cell) so it carries 25 to 30 cells. Each tick it spreads to neighbors and fades (half-life about 140 ticks). A wandering animal turns toward or away from scent by species weights: foxes toward rabbit scent, rabbits away from fox scent, and any animal ready to breed toward its own kind. The map can show either layer as an overlay.
+
 Animals also have thirst. It rises each tick (rabbits die after 800 ticks without water, foxes 1200). At half, an animal walks to the nearest water and drinks until it's satisfied. Drinking comes right after fleeing in priority. Worlds with no water have no thirst.
 
 ### Levers
@@ -112,19 +114,19 @@ Dependencies: `vite`, `typescript`, `vitest`, all dev only.
 
 S3 storage and CloudFront for a small static site are cents per month. No backend.
 
-## Proposed: home ranges, deer, coyotes, and scavenging (waiting for sign-off)
+## In progress: scent, deer, coyotes, and scavenging
 
 Based on [RESEARCH.md](RESEARCH.md). In steps, each tuned and stability-checked on its own:
 
-1. **Home ranges and dispersal** for rabbits and foxes. Each animal has a home point (birthplace or where it was placed) and a range radius; wandering past the edge drifts it back. Young foxes leave home once at maturity and head toward areas with fewer foxes, then settle there. Fixes foxes wandering off and dying alone, the way real resident animals avoid it.
-2. **Deer and scavenging.** Deer graze, prefer forest edges, and breed slowly (one or two fawns). Does stay near their group's lead doe, so herds form. A dead deer leaves a carcass with a lot of food that rots over a few days; foxes (and later coyotes) smell it from far off and share it. Rabbits stay a single meal.
-3. **Coyotes.** Packs share one home range. They hunt rabbits alone, but need packmates nearby to take a fawn, and the pack shares the carcass. Foxes flee coyotes, so coyotes push foxes off carcasses. Young coyotes disperse like foxes.
+1. **Scent fields** instead of fixed home ranges (done). Foxes drift toward rabbits, rabbits away from foxes, and animals ready to breed toward their own kind, so a lone fox no longer wanders off and dies.
+2. **Deer and scavenging.** Deer graze, prefer forest edges, and breed slowly (one or two fawns). Deer flock (stay near nearby deer), so herds form. A dead deer leaves a carcass with a lot of food that rots over a few days; foxes (and later coyotes) smell it from far off and share it. Rabbits stay a single meal.
+3. **Coyotes.** Packs flock together. They hunt rabbits alone, but need packmates nearby to take a fawn, and the pack shares the carcass. Foxes flee coyotes, so coyotes push foxes off carcasses. Young coyotes disperse like foxes.
 
 Engine changes this needs:
 
 - Diet becomes a list of prey. Predators of each species are derived from diets.
 - Meal size moves from the predator to the prey.
-- Home point, range radius, and a dispersal flag per animal.
+- Flocking (cohesion and alignment with nearby same-species animals) for deer and coyotes.
 - Carcasses as a new kind of thing in the world, with food that decays.
 - Fawns: young deer that are easier prey until grown.
 - The chart gets a panel per species; panel labels carry identity once there are more than three.
@@ -143,6 +145,7 @@ Dropped: voles (mostly "smaller rabbits" in a sim; deer and coyotes give predato
 - 2026-11-16: Water is a resource. Animals get thirsty and walk to water to drink (phase 3).
 - 2026-11-16: No temperature slider for now. Climate sliders change live; terrain sliders apply on New world.
 - 2026-11-16: Presets plus Randomize. Presets are measured for stability, not hand-waved. Dropped a planned "Too much of a good thing" preset.
+- 2026-11-16: Scent fields over fixed home ranges or memory: one rule covers food, fear, and finding mates, and it can be shown on the map. Flocking only for deer and coyotes, the real pack animals. On the tuning seeds, survival rose to 10, 10, 9, and 8 of 10 (Balanced, Lake, Watering hole, Harsh winters), from about 9.5, 8, 8, and 5.
 - 2026-11-16: Balanced meadow overfit: 9/10 on its tuning seeds, 5/10 on held-out ones. Many small forest patches (patchiness 0.7) fixed it: 19/20 tuning, 10/10 held out.
 - 2026-11-16: Dropped history replay and shareable links. Shipped to shampoe.com/wildwood/ (WildwoodSite stack, CloudFront d1mfvy64vj80p6.cloudfront.net).
 - 2026-11-16: Forest cover works as a refuge: with it, the two calm presets went from 4/6 to 6/6 survival. More forest made Harsh winters worse, because forest stores less grass for winter.

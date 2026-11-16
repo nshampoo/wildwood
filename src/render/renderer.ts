@@ -1,3 +1,5 @@
+import { SCENT_CELL } from '../engine/scent';
+import type { Species } from '../engine/species';
 import { FOREST, WATER } from '../engine/terrain';
 import type { World } from '../engine/world';
 
@@ -7,6 +9,7 @@ const FOREST_BARE = [92, 84, 56];
 const FOREST_LUSH = [38, 92, 48];
 const WATER_RGB = [58, 108, 158];
 const COLORS = { rabbit: '#f4f1e8', fox: '#d95926' };
+const SCENT_RGB: Record<Species, string> = { rabbit: '244, 241, 232', fox: '217, 89, 38' }; // same as the dots
 
 export const CELL_PX = 8;
 
@@ -22,7 +25,7 @@ export function createRenderer(canvas: HTMLCanvasElement, world: World) {
   const pixels = groundCtx.createImageData(world.width, world.height);
 
   // alpha is how far we are between the last tick and the next, 0 to 1
-  return function draw(w: World, alpha: number) {
+  return function draw(w: World, alpha: number, scent: Species | null) {
     for (let i = 0; i < w.grass.length; i++) {
       const g = w.grass[i];
       const t = w.terrain[i];
@@ -33,6 +36,7 @@ export function createRenderer(canvas: HTMLCanvasElement, world: World) {
     groundCtx.putImageData(pixels, 0, 0);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(ground, 0, 0, canvas.width, canvas.height);
+    if (scent) drawScent(ctx, w, scent);
 
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.lineWidth = 1;
@@ -46,4 +50,19 @@ export function createRenderer(canvas: HTMLCanvasElement, world: World) {
       ctx.stroke();
     }
   };
+}
+
+function drawScent(ctx: CanvasRenderingContext2D, w: World, species: Species) {
+  const layer = w.scent.layers[species];
+  const max = Math.max(...layer);
+  if (max <= 0) return;
+  const size = SCENT_CELL * CELL_PX;
+  for (let y = 0; y < w.scent.rows; y++) {
+    for (let x = 0; x < w.scent.cols; x++) {
+      const v = layer[y * w.scent.cols + x] / max;
+      if (v < 0.05) continue;
+      ctx.fillStyle = `rgba(${SCENT_RGB[species]}, ${(v * 0.65).toFixed(3)})`;
+      ctx.fillRect(x * size, y * size, size, size);
+    }
+  }
 }

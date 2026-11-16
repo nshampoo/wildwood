@@ -17,6 +17,7 @@ export interface SpeciesStats {
   lifespan: number; // ticks, varied +-20% per animal
   idleCost: number; // energy per tick
   thirstRate: number; // thirst per tick; dies at 1
+  scent: Partial<Record<Species, number>>; // pull toward (+) or away from (-) each species' scent while wandering
   moveCost: number; // energy per cell moved
 }
 
@@ -38,6 +39,7 @@ export const STATS: Record<Species, SpeciesStats> = {
     lifespan: 3000,
     idleCost: 0.12,
     thirstRate: 1 / 800,
+    scent: { fox: -1 },
     moveCost: 0.8,
   },
   fox: {
@@ -57,9 +59,12 @@ export const STATS: Record<Species, SpeciesStats> = {
     lifespan: 6000,
     idleCost: 0.1,
     thirstRate: 1 / 1200,
+    scent: { rabbit: 1 },
     moveCost: 0.5,
   },
 };
+
+export const SPECIES = Object.keys(STATS) as Species[];
 
 export const PREDATORS: Record<Species, Species[]> = {
   rabbit: ['fox'],

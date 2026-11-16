@@ -29,6 +29,7 @@ Builds the app, then deploys the `WildwoodSite` stack: a private S3 bucket behin
 | `src/engine/` | Simulation: world, grass, animals, population history, seeded RNG (pure TypeScript, no DOM) |
 | `src/engine/species.ts` | Every tunable species stat |
 | `src/engine/terrain.ts` | Noise terrain and the distance-to-water field |
+| `src/engine/scent.ts` | Scent layers that animals follow or avoid |
 | `src/engine/presets.ts` | Preset worlds |
 | `src/render/` | Map renderer and population chart |
 | `src/main.ts` | Game loop and controls |

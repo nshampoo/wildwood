@@ -185,6 +185,29 @@ describe('forest', () => {
   });
 });
 
+describe('scent', () => {
+  // Scent piled up at x = 36, then an animal at x = 20 wanders for a while.
+  const drift = (species: 'rabbit' | 'fox', scentOf: 'rabbit' | 'fox') => {
+    const w = createWorld(40, 20, 3);
+    for (let i = 0; i < 300; i++) {
+      w.scent.layers[scentOf][Math.floor(10 / 4) * w.scent.cols + Math.floor(36 / 4)] += 1;
+      step(w);
+    }
+    const a = addAnimal(w, species, 20, 10, STATS[species].maxEnergy);
+    a.cooldown = 10000;
+    for (let i = 0; i < 60; i++) step(w);
+    return a.x - 20;
+  };
+
+  it('foxes drift toward rabbit scent', () => {
+    expect(drift('fox', 'rabbit')).toBeGreaterThan(2);
+  });
+
+  it('rabbits drift away from fox scent', () => {
+    expect(drift('rabbit', 'fox')).toBeLessThan(-2);
+  });
+});
+
 describe('climate', () => {
   it('rainfall scales growth and seasons stop it in deep winter', () => {
     expect(growthRate({ rainfall: 0.5, seasons: 0 }, 0)).toBeCloseTo(GRASS_REGROW);

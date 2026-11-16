@@ -132,8 +132,12 @@
         align-items: center;
         margin-top: 6px;
       }
+      .spacer {
+        flex: 1;
+      }
       .place {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 8px;
         margin-top: 8px;
@@ -157,6 +161,11 @@
           Click the map to drop a
           <button data-place="rabbit" class="active">Rabbit</button>
           <button data-place="fox">Fox</button>
+          <span class="spacer"></span>
+          Scent
+          <button data-scent="" class="active">Off</button>
+          <button data-scent="rabbit">Rabbits</button>
+          <button data-scent="fox">Foxes</button>
         </div>
       </div>
       <aside>

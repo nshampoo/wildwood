@@ -18,6 +18,7 @@ const stats = $('#stats');
 const playButton = $<HTMLButtonElement>('#play');
 const speedButtons = document.querySelectorAll<HTMLButtonElement>('[data-speed]');
 const placeButtons = document.querySelectorAll<HTMLButtonElement>('[data-place]');
+const scentButtons = document.querySelectorAll<HTMLButtonElement>('[data-scent]');
 const presetSelect = $<HTMLSelectElement>('#preset');
 const presetWatch = $('#preset-watch');
 const worldHint = $('#world-hint');
@@ -39,6 +40,7 @@ let draw: ReturnType<typeof createRenderer>;
 let playing = true;
 let speed = 1;
 let placing: Species = 'rabbit';
+let showScent: Species | null = null;
 let carry = 0;
 let last = performance.now();
 
@@ -98,7 +100,7 @@ function frame(now: number) {
     steps++;
   }
   if (steps === MAX_STEPS_PER_FRAME) carry = 0; // too slow to keep up, drop the backlog
-  draw(world, carry / TICK_MS);
+  draw(world, carry / TICK_MS, showScent);
   drawChart(history.samples);
   const c = census(world);
   const { season, year } = seasonOf(world.tick);
@@ -143,6 +145,12 @@ for (const b of speedButtons) {
   b.onclick = () => {
     speed = Number(b.dataset.speed);
     pick(speedButtons, b);
+  };
+}
+for (const b of scentButtons) {
+  b.onclick = () => {
+    showScent = (b.dataset.scent || null) as Species | null;
+    pick(scentButtons, b);
   };
 }
 for (const b of placeButtons) {
