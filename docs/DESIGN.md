@@ -25,16 +25,18 @@ Agents with a continuous position on top of the grid. Fixed stats per species:
 
 | Stat | Rabbit | Fox |
 | --- | --- | --- |
-| Speed (cells/tick) | 0.12 | 0.16 |
+| Speed (cells/tick) | 0.12 | 0.18 |
 | Vision (cells) | 4 | 7 |
+| Mate range (cells) | 8 | 30 |
 | Eats | grass | rabbits |
 | Max energy | 50 | 120 |
-| Breeds at energy | 35 | 90 |
+| Breeds at energy | 35 | 80 |
+| Territory | none | won't breed with 2+ other foxes within 15 cells |
 | Lifespan (ticks) | ~3000 | ~6000 |
 
-Numbers are starting guesses and will be tuned until the predator/prey cycles show up.
+Full values live in `src/engine/species.ts`.
 
-Each tick an animal picks the first state that applies:
+Each tick an animal picks the first state that applies (foxes hunt instead of graze):
 
 1. Flee: a predator is in vision. Move away.
 2. Eat: hungry and food in vision. Move to it and eat.
@@ -58,7 +60,8 @@ Rainfall, temperature, season length, terrain roughness, water level, map seed, 
 ## UX
 
 - Canvas map with pan and zoom.
-- Live population chart: rabbits, foxes, grass coverage.
+- Population chart: three stacked panels (rabbits, foxes, grass) on a shared time axis, each with its own y scale. Never one dual-axis chart; foxes number in the dozens and rabbits in the hundreds. Hovering shows every series' value on that day. Colors are the dataviz skill's first three categorical slots (validated for color blindness on the dark surface): rabbits blue, foxes orange, grass teal.
+- History keeps the whole run in at most 600 samples by halving resolution when full.
 - Click an animal to follow it and see its energy, age, and state.
 - Visual style in steps, with the renderer kept separate from the engine so each step only touches `src/render/`:
   1. Colored dots on a grass heatmap.
@@ -102,8 +105,10 @@ S3 storage and CloudFront for a small static site are cents per month. No backen
 - 2026-11-16: Sandbox only. Goal scenarios are a stretch item.
 - 2026-11-16: Stack and dependencies above approved. No React.
 - 2026-11-16: Water is a resource. Animals get thirsty and walk to water to drink (phase 3).
+- 2026-11-16: Phase 2 tuning. Untuned foxes either never met to breed (fixed with a long mate range) or ate every rabbit (speed 0.2+). Fox territory is the stabilizer: at speed 0.18, territory 15 cells, limit 2, four of six seeds cycle for 40,000 ticks; the other two lose their foxes. Forest cover for rabbits in phase 3 should stabilize it further.
 - 2026-11-16: Phase 1 tuning: 20 rabbits on a 120 x 80 map overshoot to ~1,270, then settle near 930 with grass at ~25%. About 0.5 ms per tick at that size.
 
 ## Open decisions
 
 - Where the pixel sprite art comes from: hand-drawn, a free-licensed pack, or generated.
+- Chart table view (an accessible alternative to the canvas chart). Skipped for now.

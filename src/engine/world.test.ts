@@ -71,11 +71,65 @@ describe('rabbits', () => {
   });
 });
 
+describe('foxes', () => {
+  it('catch a rabbit in reach and gain energy', () => {
+    const w = createWorld(20, 20, 1);
+    const fox = addAnimal(w, 'fox', 10, 10, 50);
+    addAnimal(w, 'rabbit', 10.3, 10);
+    step(w);
+    expect(count(w, 'rabbit')).toBe(0);
+    expect(fox.energy).toBeGreaterThan(50);
+  });
+
+  it('chase a rabbit they can see', () => {
+    const w = createWorld(20, 20, 1);
+    const fox = addAnimal(w, 'fox', 5, 10, 50);
+    addAnimal(w, 'rabbit', 10, 10);
+    step(w);
+    expect(fox.state).toBe('hunt');
+    expect(fox.x).toBeGreaterThan(5);
+  });
+
+  it('ignore rabbits when full', () => {
+    const w = createWorld(20, 20, 1);
+    const fox = addAnimal(w, 'fox', 5, 10, STATS.fox.maxEnergy);
+    fox.cooldown = 1000;
+    addAnimal(w, 'rabbit', 7, 10);
+    step(w);
+    expect(fox.state).toBe('wander');
+  });
+
+  it("breed in open territory but not a crowded one", () => {
+    const pair = (crowded: boolean) => {
+      const w = createWorld(40, 40, 1);
+      addAnimal(w, 'fox', 20, 20, 100);
+      addAnimal(w, 'fox', 20.5, 20, 100);
+      if (crowded) addAnimal(w, 'fox', 25, 20, 10).cooldown = 1000;
+      step(w);
+      return count(w, 'fox');
+    };
+    expect(pair(false)).toBe(3);
+    expect(pair(true)).toBe(3);
+  });
+});
+
+describe('rabbits and foxes', () => {
+  it('rabbits flee a fox they can see', () => {
+    const w = createWorld(20, 20, 1);
+    addAnimal(w, 'fox', 8, 10, STATS.fox.maxEnergy);
+    const r = addAnimal(w, 'rabbit', 10, 10);
+    step(w);
+    expect(r.state).toBe('flee');
+    expect(r.x).toBeGreaterThan(10);
+  });
+});
+
 describe('determinism', () => {
   it('replays the same run from the same seed', () => {
     const run = () => {
       const w = createWorld(40, 30, 7);
       for (let i = 0; i < 10; i++) addAnimal(w, 'rabbit', w.rand() * 40, w.rand() * 30);
+      for (let i = 0; i < 3; i++) addAnimal(w, 'fox', w.rand() * 40, w.rand() * 30);
       for (let i = 0; i < 500; i++) step(w);
       return w.animals.map((a) => [a.x, a.y, a.energy]);
     };

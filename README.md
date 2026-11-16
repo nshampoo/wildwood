@@ -1,6 +1,6 @@
 # Wildwood
 
-An ecosystem sandbox. Shape a world, drop in rabbits and foxes, and watch the populations rise and crash. It will live at shampoe.com/wildwood/.
+An ecosystem sandbox. Shape a world, drop in rabbits and foxes, and watch the populations rise and crash on a live chart. It will live at shampoe.com/wildwood/.
 
 See [docs/DESIGN.md](docs/DESIGN.md) for the model and plan.
 
@@ -19,8 +19,9 @@ Not set up yet.
 
 | Path | What |
 | --- | --- |
-| `src/engine/` | Simulation: world, grass, animals, seeded RNG (pure TypeScript, no DOM) |
-| `src/render/` | Canvas renderer |
+| `src/engine/` | Simulation: world, grass, animals, population history, seeded RNG (pure TypeScript, no DOM) |
+| `src/engine/species.ts` | Every tunable species stat |
+| `src/render/` | Map renderer and population chart |
 | `src/main.ts` | Game loop and controls |
 | `index.html` | Page and styles |
 | `docs/DESIGN.md` | Design and plan |

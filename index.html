@@ -40,15 +40,50 @@
         margin-left: auto;
         font-variant-numeric: tabular-nums;
       }
+      main {
+        display: grid;
+        gap: 16px;
+        max-width: 960px;
+      }
+      @media (min-width: 1280px) {
+        main {
+          grid-template-columns: minmax(0, 960px) 320px;
+          max-width: none;
+          align-items: start;
+        }
+      }
       #map {
         display: block;
         width: 100%;
-        max-width: 960px;
         image-rendering: pixelated;
         border-radius: 6px;
         cursor: crosshair;
       }
-      p {
+      .chart-wrap {
+        position: relative;
+      }
+      #chart {
+        display: block;
+        width: 100%;
+        border-radius: 6px;
+        cursor: crosshair;
+      }
+      #chart-tooltip {
+        position: absolute;
+        top: 4px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: #e8e6df;
+        color: #1d211b;
+        font-size: 12px;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+      .place {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
         color: #a3a89c;
       }
     </style>
@@ -63,8 +98,20 @@
       <button id="reset">New world</button>
       <span id="stats"></span>
     </header>
-    <canvas id="map"></canvas>
-    <p>Click the map to drop a rabbit.</p>
+    <main>
+      <div>
+        <canvas id="map"></canvas>
+        <div class="place">
+          Click the map to drop a
+          <button data-place="rabbit" class="active">Rabbit</button>
+          <button data-place="fox">Fox</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chart" aria-label="Population over time"></canvas>
+        <div id="chart-tooltip" hidden></div>
+      </div>
+    </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

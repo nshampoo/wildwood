@@ -1,7 +1,7 @@
 import { mulberry32 } from './rng';
-import { STATS, type Species, type SpeciesStats } from './species';
+import { PREDATORS, STATS, type Species, type SpeciesStats } from './species';
 
-export type State = 'wander' | 'seek' | 'graze' | 'mate';
+export type State = 'wander' | 'seek' | 'graze' | 'hunt' | 'flee' | 'mate';
 
 export interface Animal {
   id: number;
@@ -34,6 +34,7 @@ export const GRASS_BITE = 0.05; // grass eaten per tick of grazing
 export const GRASS_ENERGY = 20; // energy in a full cell
 const MIN_GRASS = 0.2; // below this a cell isn't worth eating
 const BUCKET = 8; // spatial index cell size
+const CATCH_DIST = 0.5;
 
 export function createWorld(width: number, height: number, seed: number): World {
   const rand = mulberry32(seed);
@@ -71,6 +72,19 @@ export function count(w: World, species: Species): number {
   return w.animals.filter((a) => a.species === species).length;
 }
 
+export interface Census {
+  tick: number;
+  rabbits: number;
+  foxes: number;
+  grass: number; // mean grass, 0 to 1
+}
+
+export function census(w: World): Census {
+  let grass = 0;
+  for (const g of w.grass) grass += g;
+  return { tick: w.tick, rabbits: count(w, 'rabbit'), foxes: count(w, 'fox'), grass: grass / w.grass.length };
+}
+
 export function step(w: World): void {
   for (let i = 0; i < w.grass.length; i++) w.grass[i] = Math.min(1, w.grass[i] + GRASS_REGROW);
 
@@ -92,7 +106,7 @@ function act(w: World, index: Index, a: Animal, born: Animal[]): void {
   if (a.cooldown > 0) a.cooldown--;
   a.energy -= s.idleCost;
 
-  if (!tryMate(w, index, a, s, born) && !tryEat(w, a, s)) wander(w, a, s);
+  if (!tryFlee(w, index, a, s) && !tryMate(w, index, a, s, born) && !tryEat(w, index, a, s)) wander(w, a, s);
 
   if (a.energy <= 0 || a.age >= a.maxAge) a.alive = false;
 }
@@ -101,9 +115,18 @@ function canBreed(a: Animal, s: SpeciesStats): boolean {
   return a.alive && a.energy >= s.breedAt && a.cooldown === 0;
 }
 
+function crowded(index: Index, a: Animal, s: SpeciesStats): boolean {
+  if (s.crowdLimit === 0) return false;
+  let n = 0;
+  forEachNear(index, a, s.crowdRadius, (b) => {
+    if (b.alive && b.species === a.species) n++;
+  });
+  return n >= s.crowdLimit;
+}
+
 function tryMate(w: World, index: Index, a: Animal, s: SpeciesStats, born: Animal[]): boolean {
-  if (!canBreed(a, s)) return false;
-  const mate = nearest(index, a, s.vision, (b) => b.species === a.species && canBreed(b, s));
+  if (!canBreed(a, s) || crowded(index, a, s)) return false;
+  const mate = nearest(index, a, s.mateRange, (b) => b.species === a.species && canBreed(b, s));
   if (!mate) return false;
   a.state = 'mate';
   if (Math.hypot(mate.x - a.x, mate.y - a.y) > 1) {
@@ -119,8 +142,20 @@ function tryMate(w: World, index: Index, a: Animal, s: SpeciesStats, born: Anima
   return true;
 }
 
-function tryEat(w: World, a: Animal, s: SpeciesStats): boolean {
+function tryFlee(w: World, index: Index, a: Animal, s: SpeciesStats): boolean {
+  const predators = PREDATORS[a.species];
+  if (predators.length === 0) return false;
+  const threat = nearest(index, a, s.vision, (b) => b.alive && predators.includes(b.species));
+  if (!threat) return false;
+  a.state = 'flee';
+  a.heading = Math.atan2(a.y - threat.y, a.x - threat.x) + (w.rand() - 0.5) * 0.4;
+  move(w, a, s, s.speed);
+  return true;
+}
+
+function tryEat(w: World, index: Index, a: Animal, s: SpeciesStats): boolean {
   if (a.energy >= s.maxEnergy * s.hungryBelow) return false;
+  if (s.diet !== 'grass') return tryHunt(w, index, a, s, s.diet);
   const here = cellOf(w, a.x, a.y);
   if (w.grass[here] >= MIN_GRASS) {
     a.state = 'graze';
@@ -132,6 +167,19 @@ function tryEat(w: World, a: Animal, s: SpeciesStats): boolean {
   const target = bestGrass(w, a, s.vision);
   if (!target) return false;
   a.state = 'seek';
+  moveToward(w, a, s, target.x, target.y);
+  return true;
+}
+
+function tryHunt(w: World, index: Index, a: Animal, s: SpeciesStats, prey: Species): boolean {
+  const target = nearest(index, a, s.vision, (b) => b.alive && b.species === prey);
+  if (!target) return false;
+  a.state = 'hunt';
+  if (Math.hypot(target.x - a.x, target.y - a.y) <= CATCH_DIST) {
+    target.alive = false;
+    a.energy = Math.min(s.maxEnergy, a.energy + s.killEnergy);
+    return true;
+  }
   moveToward(w, a, s, target.x, target.y);
   return true;
 }
@@ -200,23 +248,29 @@ function buildIndex(w: World): Index {
 }
 
 function nearest(index: Index, a: Animal, r: number, match: (b: Animal) => boolean): Animal | null {
+  let best: Animal | null = null;
+  let bestDist = Infinity;
+  forEachNear(index, a, r, (b, d) => {
+    if (d < bestDist && match(b)) {
+      bestDist = d;
+      best = b;
+    }
+  });
+  return best;
+}
+
+function forEachNear(index: Index, a: Animal, r: number, fn: (b: Animal, dist: number) => void): void {
   const x0 = Math.max(0, Math.floor((a.x - r) / BUCKET));
   const x1 = Math.min(index.cols - 1, Math.floor((a.x + r) / BUCKET));
   const y0 = Math.max(0, Math.floor((a.y - r) / BUCKET));
   const y1 = Math.min(index.rows - 1, Math.floor((a.y + r) / BUCKET));
-  let best: Animal | null = null;
-  let bestDist = r;
   for (let by = y0; by <= y1; by++) {
     for (let bx = x0; bx <= x1; bx++) {
       for (const b of index.buckets[by * index.cols + bx]) {
-        if (b === a || !match(b)) continue;
+        if (b === a) continue;
         const d = Math.hypot(b.x - a.x, b.y - a.y);
-        if (d <= bestDist) {
-          bestDist = d;
-          best = b;
-        }
+        if (d <= r) fn(b, d);
       }
     }
   }
-  return best;
 }

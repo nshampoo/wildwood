@@ -2,7 +2,7 @@ import type { World } from '../engine/world';
 
 const BARE = [139, 111, 71];
 const LUSH = [76, 140, 58];
-const COLORS = { rabbit: '#f4f1e8' };
+const COLORS = { rabbit: '#f4f1e8', fox: '#d95926' };
 
 export const CELL_PX = 8;
 
