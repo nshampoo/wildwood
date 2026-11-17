@@ -1,16 +1,14 @@
 import { createHistory, record, type History } from './engine/history';
-import { PRESETS } from './engine/presets';
+import { MAP, PRESETS } from './engine/presets';
 import type { Species } from './engine/species';
 import type { TerrainSettings } from './engine/terrain';
 import { addAnimal, census, createWorld, isLand, randomLand, seasonOf, step, type Climate, type World } from './engine/world';
 import { createChart, TICKS_PER_DAY } from './render/chart';
 import { CELL_PX, createRenderer } from './render/renderer';
 
-const WIDTH = 120;
-const HEIGHT = 80;
 const TICK_MS = 100; // 10 ticks per second at 1x
 const MAX_STEPS_PER_FRAME = 50;
-const CUSTOM_START: Record<Species, number> = { rabbit: 40, fox: 6, deer: 12, coyote: 4 };
+const CUSTOM_START: Record<Species, number> = { rabbit: 90, fox: 14, deer: 27, coyote: 9 };
 
 const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
 const canvas = $<HTMLCanvasElement>('#map');
@@ -61,7 +59,7 @@ function showValue(k: Setting) {
 function newWorld() {
   const preset = PRESETS[Number(presetSelect.value)];
   const start = preset?.start ?? CUSTOM_START;
-  world = createWorld(WIDTH, HEIGHT, Math.floor(Math.random() * 2 ** 32), terrainSettings(), climate());
+  world = createWorld(MAP.width, MAP.height, Math.floor(Math.random() * 2 ** 32), terrainSettings(), climate());
   for (const species of Object.keys(start) as Species[]) {
     for (let i = 0; i < start[species]; i++) {
       const at = randomLand(world);

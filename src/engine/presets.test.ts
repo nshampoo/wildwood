@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PRESETS } from './presets';
+import { MAP, PRESETS } from './presets';
 import { SPECIES, type Species } from './species';
 import { addAnimal, census, createWorld, randomLand, step } from './world';
 
@@ -16,7 +16,7 @@ const MIN_SURVIVAL: Record<string, number> = {
 };
 
 function survives(preset: (typeof PRESETS)[number], seed: number): boolean {
-  const w = createWorld(120, 80, seed, preset.terrain, preset.climate);
+  const w = createWorld(MAP.width, MAP.height, seed, preset.terrain, preset.climate);
   for (const species of Object.keys(preset.start) as Species[]) {
     for (let i = 0; i < preset.start[species]; i++) {
       const at = randomLand(w);

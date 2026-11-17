@@ -2,7 +2,7 @@ export type Species = 'rabbit' | 'fox' | 'deer' | 'coyote';
 export type Plant = 'grass' | 'browse'; // browse (leaves and twigs) grows only in forest
 
 export interface SpeciesStats {
-  prey: Species[]; // empty for grazers
+  prey: Species[]; // in order of preference; empty for grazers
   packHunt: Partial<Record<Species, number>>; // packmates it needs nearby to take a grown one of these
   scavenges: boolean; // eats from carcasses
   plants: Plant[]; // what it grazes; empty for meat eaters
@@ -107,7 +107,7 @@ export const STATS: Record<Species, SpeciesStats> = {
     breedCost: 50,
     breedCooldown: 4000,
     babyEnergy: 60,
-    litter: 1,
+    litter: 2, // twins; one fawn a year couldn't outpace coyotes
     lifespan: 20000,
     idleCost: 0.5,
     moveCost: 1,
@@ -116,7 +116,7 @@ export const STATS: Record<Species, SpeciesStats> = {
     flock: 8,
   },
   coyote: {
-    prey: ['rabbit', 'deer'], // hunting foxes too wiped them out; foxes avoid coyote scent instead
+    prey: ['rabbit', 'deer', 'fox'], // foxes only when nothing else is in sight
     packHunt: { deer: 2 }, // a lone coyote only takes fawns
     scavenges: true,
     plants: [],
@@ -128,8 +128,8 @@ export const STATS: Record<Species, SpeciesStats> = {
     mateRange: 30,
     maxEnergy: 150,
     hungryBelow: 0.9,
-    crowdRadius: 20,
-    crowdLimit: 6,
+    crowdRadius: 30,
+    crowdLimit: 3, // a pair plus a yearling or two; bigger packs meant more coyotes and foxes always fleeing
     maturity: 1000,
     breedAt: 100,
     breedCost: 40,

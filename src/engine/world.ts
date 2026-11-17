@@ -346,7 +346,11 @@ function overLand(w: World, x0: number, y0: number, x1: number, y1: number): boo
 function tryHunt(w: World, index: Index, a: Animal, s: SpeciesStats): boolean {
   const pack = Object.keys(s.packHunt).length ? packmates(index, a) : 0;
   const canTake = (b: Animal) => b.age < STATS[b.species].maturity || pack >= (s.packHunt[b.species] ?? 0);
-  const target = nearest(index, a, s.vision, (b, d) => b.alive && s.prey.includes(b.species) && sees(w, a, b, d) && canTake(b));
+  let target: Animal | null = null;
+  for (const sp of s.prey) {
+    target = nearest(index, a, s.vision, (b, d) => b.alive && b.species === sp && sees(w, a, b, d) && canTake(b));
+    if (target) break;
+  }
   if (!target) return false;
   a.state = 'hunt';
   if (Math.hypot(target.x - a.x, target.y - a.y) <= CATCH_DIST) {

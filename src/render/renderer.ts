@@ -13,7 +13,7 @@ const CARCASS = '#5a2a22';
 const SCENT_RGB: Record<Species, string> = { rabbit: '244, 241, 232', fox: '217, 89, 38', deer: '185, 138, 94', coyote: '160, 154, 142' }; // same as the dots
 
 export const CELL_PX = 8;
-const RADIUS: Record<Species, number> = { rabbit: 0.35, fox: 0.4, deer: 0.5, coyote: 0.45 };
+const RADIUS: Record<Species, number> = { rabbit: 0.5, fox: 0.6, deer: 0.75, coyote: 0.65 }; // cells
 
 export function createRenderer(canvas: HTMLCanvasElement, world: World) {
   const ctx = canvas.getContext('2d')!;
