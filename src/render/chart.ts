@@ -2,11 +2,12 @@ import type { Census } from '../engine/world';
 
 export const TICKS_PER_DAY = 100;
 
-// The three animal colors are validated for color blindness; grass is the environment, so it's neutral.
+// Animal colors are validated for color blindness between neighboring panels; grass is the environment, so it's neutral.
 const SERIES = [
   { key: 'rabbit', label: 'Rabbits', color: '#3987e5', format: (v: number) => v.toLocaleString() },
   { key: 'fox', label: 'Foxes', color: '#d95926', format: (v: number) => v.toLocaleString() },
   { key: 'deer', label: 'Deer', color: '#199e70', format: (v: number) => v.toLocaleString() },
+  { key: 'coyote', label: 'Coyotes', color: '#c98500', format: (v: number) => v.toLocaleString() },
   { key: 'grass', label: 'Grass', color: '#a3a89c', format: (v: number) => `${Math.round(v * 100)}%` },
 ] as const;
 

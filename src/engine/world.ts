@@ -3,7 +3,7 @@ import { createScent, deposit, scentHeading, spread, type ScentField } from './s
 import { PREDATORS, SPECIES, STATS, type Plant, type Species, type SpeciesStats } from './species';
 import { distanceToWater, FLAT, FOREST, generateTerrain, WATER, type TerrainSettings } from './terrain';
 
-export type State = 'wander' | 'seek' | 'graze' | 'hunt' | 'scavenge' | 'flee' | 'mate' | 'thirsty' | 'drink';
+export type State = 'wander' | 'seek' | 'graze' | 'hunt' | 'scavenge' | 'flee' | 'mate' | 'thirsty' | 'drink' | 'caught';
 
 export interface Animal {
   id: number;
@@ -71,6 +71,7 @@ const FLOCK_SPACING = 2; // closer than this, match the flock's heading instead 
 const SMELL = 25; // carcasses can be smelled from this far
 const FEED_RATE = 3; // energy per tick eaten from a carcass
 const ROT = 0.15; // carcass meat lost per tick
+const PACK_RADIUS = 4; // packmates within this many cells join a hunt
 
 export function createWorld(
   width: number,
@@ -191,7 +192,7 @@ export function step(w: World): void {
     act(w, index, a, born);
   }
   for (const a of w.animals) {
-    if (!a.alive && STATS[a.species].carcass) w.carcasses.push({ x: a.x, y: a.y, meat: STATS[a.species].meat });
+    if (!a.alive && a.state !== 'caught') w.carcasses.push({ x: a.x, y: a.y, meat: STATS[a.species].meat });
   }
   for (const c of w.carcasses) c.meat -= ROT;
   w.carcasses = w.carcasses.filter((c) => c.meat > 0);
@@ -316,7 +317,7 @@ function tryScavenge(w: World, a: Animal, s: SpeciesStats): boolean {
   let bestDist = SMELL;
   for (const c of w.carcasses) {
     const d = Math.hypot(c.x - a.x, c.y - a.y);
-    if (d < bestDist) {
+    if (d < bestDist && overLand(w, a.x, a.y, c.x, c.y)) {
       bestDist = d;
       best = c;
     }
@@ -333,12 +334,24 @@ function tryScavenge(w: World, a: Animal, s: SpeciesStats): boolean {
   return true;
 }
 
+// Food across water would pin an animal against the shore, so only straight paths over land count.
+function overLand(w: World, x0: number, y0: number, x1: number, y1: number): boolean {
+  const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0));
+  for (let i = 1; i < n; i++) {
+    if (w.terrain[cellOf(w, x0 + ((x1 - x0) * i) / n, y0 + ((y1 - y0) * i) / n)] === WATER) return false;
+  }
+  return true;
+}
+
 function tryHunt(w: World, index: Index, a: Animal, s: SpeciesStats): boolean {
-  const target = nearest(index, a, s.vision, (b, d) => b.alive && s.prey.includes(b.species) && visible(w, b, d));
+  const pack = Object.keys(s.packHunt).length ? packmates(index, a) : 0;
+  const canTake = (b: Animal) => b.age < STATS[b.species].maturity || pack >= (s.packHunt[b.species] ?? 0);
+  const target = nearest(index, a, s.vision, (b, d) => b.alive && s.prey.includes(b.species) && visible(w, b, d) && canTake(b) && overLand(w, a.x, a.y, b.x, b.y));
   if (!target) return false;
   a.state = 'hunt';
   if (Math.hypot(target.x - a.x, target.y - a.y) <= CATCH_DIST) {
     target.alive = false;
+    target.state = 'caught';
     const meat = STATS[target.species];
     if (meat.carcass) w.carcasses.push({ x: target.x, y: target.y, meat: meat.meat });
     else a.energy = Math.min(s.maxEnergy, a.energy + meat.meat);
@@ -346,6 +359,14 @@ function tryHunt(w: World, index: Index, a: Animal, s: SpeciesStats): boolean {
   }
   moveToward(w, a, s, target.x, target.y);
   return true;
+}
+
+function packmates(index: Index, a: Animal): number {
+  let n = 0;
+  forEachNear(index, a, PACK_RADIUS, (b) => {
+    if (b.alive && b.species === a.species) n++;
+  });
+  return n;
 }
 
 // The first plant on the list worth eating here.

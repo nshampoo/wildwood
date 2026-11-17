@@ -1,13 +1,14 @@
-export type Species = 'rabbit' | 'fox' | 'deer';
+export type Species = 'rabbit' | 'fox' | 'deer' | 'coyote';
 export type Plant = 'grass' | 'browse'; // browse (leaves and twigs) grows only in forest
 
 export interface SpeciesStats {
   prey: Species[]; // empty for grazers
+  packHunt: Partial<Record<Species, number>>; // packmates it needs nearby to take a grown one of these
   scavenges: boolean; // eats from carcasses
   plants: Plant[]; // what it grazes; empty for meat eaters
   bite: number; // plant eaten per tick of grazing
-  meat: number; // energy for whoever eats it; leaves a carcass if carcass is true
-  carcass: boolean;
+  meat: number; // energy for whoever eats it; any natural death leaves a carcass of this size
+  carcass: boolean; // kills leave a carcass to share instead of being eaten whole
   speed: number; // cells per tick
   vision: number; // cells
   mateRange: number; // cells; scent and calls carry further than sight
@@ -32,6 +33,7 @@ export interface SpeciesStats {
 export const STATS: Record<Species, SpeciesStats> = {
   rabbit: {
     prey: [],
+    packHunt: {},
     scavenges: false,
     plants: ['grass'],
     bite: 0.05,
@@ -54,11 +56,12 @@ export const STATS: Record<Species, SpeciesStats> = {
     idleCost: 0.12,
     moveCost: 0.8,
     thirstRate: 1 / 800,
-    scent: { fox: -1 },
+    scent: { fox: -1, coyote: -1 },
     flock: 0,
   },
   fox: {
     prey: ['rabbit'],
+    packHunt: {},
     scavenges: true,
     plants: [],
     bite: 0,
@@ -81,11 +84,12 @@ export const STATS: Record<Species, SpeciesStats> = {
     idleCost: 0.1,
     moveCost: 0.5,
     thirstRate: 1 / 1200,
-    scent: { rabbit: 1 },
+    scent: { rabbit: 1, coyote: -1 },
     flock: 0,
   },
   deer: {
     prey: [],
+    packHunt: {},
     scavenges: false,
     plants: ['browse'], // mostly browsers; eating grass pushed rabbits into forest, out of foxes' sight
     bite: 0.15,
@@ -108,8 +112,36 @@ export const STATS: Record<Species, SpeciesStats> = {
     idleCost: 0.5,
     moveCost: 1,
     thirstRate: 1 / 1000,
-    scent: {},
+    scent: { coyote: -0.5 },
     flock: 8,
+  },
+  coyote: {
+    prey: ['rabbit', 'deer'], // hunting foxes too wiped them out; foxes avoid coyote scent instead
+    packHunt: { deer: 2 }, // a lone coyote only takes fawns
+    scavenges: true,
+    plants: [],
+    bite: 0,
+    meat: 80,
+    carcass: false,
+    speed: 0.17,
+    vision: 8,
+    mateRange: 30,
+    maxEnergy: 150,
+    hungryBelow: 0.9,
+    crowdRadius: 20,
+    crowdLimit: 6,
+    maturity: 1000,
+    breedAt: 100,
+    breedCost: 40,
+    breedCooldown: 4000,
+    babyEnergy: 40,
+    litter: 3,
+    lifespan: 10000,
+    idleCost: 0.12,
+    moveCost: 0.5,
+    thirstRate: 1 / 1000,
+    scent: { rabbit: 1, deer: 0.5 },
+    flock: 10,
   },
 };
 

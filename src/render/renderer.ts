@@ -8,12 +8,12 @@ const LUSH = [76, 140, 58];
 const FOREST_BARE = [92, 84, 56];
 const FOREST_LUSH = [38, 92, 48];
 const WATER_RGB = [58, 108, 158];
-const COLORS: Record<Species, string> = { rabbit: '#f4f1e8', fox: '#d95926', deer: '#b98a5e' };
+const COLORS: Record<Species, string> = { rabbit: '#f4f1e8', fox: '#d95926', deer: '#b98a5e', coyote: '#a09a8e' };
 const CARCASS = '#5a2a22';
-const SCENT_RGB: Record<Species, string> = { rabbit: '244, 241, 232', fox: '217, 89, 38', deer: '185, 138, 94' }; // same as the dots
+const SCENT_RGB: Record<Species, string> = { rabbit: '244, 241, 232', fox: '217, 89, 38', deer: '185, 138, 94', coyote: '160, 154, 142' }; // same as the dots
 
 export const CELL_PX = 8;
-const RADIUS: Record<Species, number> = { rabbit: 0.35, fox: 0.4, deer: 0.5 };
+const RADIUS: Record<Species, number> = { rabbit: 0.35, fox: 0.4, deer: 0.5, coyote: 0.45 };
 
 export function createRenderer(canvas: HTMLCanvasElement, world: World) {
   const ctx = canvas.getContext('2d')!;

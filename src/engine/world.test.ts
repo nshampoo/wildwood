@@ -257,6 +257,54 @@ describe('deer', () => {
   });
 });
 
+describe('coyotes', () => {
+  it('alone, take a fawn but not a grown deer', () => {
+    const w = createWorld(20, 20, 1);
+    w.grass.fill(0);
+    w.browse.fill(1);
+    addAnimal(w, 'deer', 10.3, 10);
+    const coyote = addAnimal(w, 'coyote', 10, 10, 50);
+    step(w);
+    expect(coyote.state).not.toBe('hunt');
+    addAnimal(w, 'deer', 9.7, 10).age = 0;
+    step(w);
+    expect(count(w, 'deer')).toBe(1);
+  });
+
+  it('in a pack, take a grown deer and leave a carcass', () => {
+    const w = createWorld(20, 20, 1);
+    w.grass.fill(0);
+    addAnimal(w, 'deer', 10.3, 10);
+    for (let i = 0; i < 3; i++) addAnimal(w, 'coyote', 10, 10 + i * 0.5, 50);
+    step(w);
+    expect(count(w, 'deer')).toBe(0);
+    expect(w.carcasses).toHaveLength(1);
+  });
+});
+
+describe('carcasses', () => {
+  it('come from natural deaths, not from small prey eaten whole', () => {
+    const w = createWorld(20, 20, 1);
+    w.grass.fill(0);
+    addAnimal(w, 'rabbit', 3, 3, 0.01);
+    addAnimal(w, 'rabbit', 15.3, 15);
+    addAnimal(w, 'fox', 15, 15, 50);
+    step(w);
+    expect(count(w, 'rabbit')).toBe(0);
+    expect(w.carcasses).toHaveLength(1);
+    expect(w.carcasses[0].x).toBeLessThan(5);
+  });
+
+  it('across water are ignored', () => {
+    const w = withLake(createWorld(20, 10, 1));
+    for (let y = 0; y < 10; y++) w.terrain[y * 20 + 10] = WATER;
+    w.carcasses.push({ x: 15, y: 5, meat: 100 });
+    const fox = addAnimal(w, 'fox', 5, 5, 50);
+    step(w);
+    expect(fox.state).not.toBe('scavenge');
+  });
+});
+
 describe('climate', () => {
   it('rainfall scales growth and seasons stop it in deep winter', () => {
     expect(growthRate({ rainfall: 0.5, seasons: 0 }, 0)).toBeCloseTo(GRASS_REGROW);
