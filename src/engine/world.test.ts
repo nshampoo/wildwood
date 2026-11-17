@@ -305,6 +305,18 @@ describe('carcasses', () => {
   });
 });
 
+describe('sight', () => {
+  it("doesn't cross water", () => {
+    const w = createWorld(20, 10, 1);
+    for (let y = 0; y < 10; y++) w.terrain[y * 20 + 10] = WATER;
+    const rabbit = addAnimal(w, 'rabbit', 12, 5);
+    const fox = addAnimal(w, 'fox', 8, 5, 50);
+    step(w);
+    expect(fox.state).not.toBe('hunt');
+    expect(rabbit.state).not.toBe('flee');
+  });
+});
+
 describe('climate', () => {
   it('rainfall scales growth and seasons stop it in deep winter', () => {
     expect(growthRate({ rainfall: 0.5, seasons: 0 }, 0)).toBeCloseTo(GRASS_REGROW);

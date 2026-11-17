@@ -229,7 +229,7 @@ function crowded(index: Index, a: Animal, s: SpeciesStats): boolean {
 
 function tryMate(w: World, index: Index, a: Animal, s: SpeciesStats, born: Animal[]): boolean {
   if (!canBreed(a, s) || crowded(index, a, s)) return false;
-  const mate = nearest(index, a, s.mateRange, (b) => b.species === a.species && canBreed(b, s));
+  const mate = nearest(index, a, s.mateRange, (b) => b.species === a.species && canBreed(b, s) && overLand(w, a.x, a.y, b.x, b.y));
   if (!mate) return false;
   a.state = 'mate';
   if (Math.hypot(mate.x - a.x, mate.y - a.y) > 1) {
@@ -252,7 +252,7 @@ function tryMate(w: World, index: Index, a: Animal, s: SpeciesStats, born: Anima
 function tryFlee(w: World, index: Index, a: Animal, s: SpeciesStats): boolean {
   const predators = PREDATORS[a.species];
   if (predators.length === 0) return false;
-  const threat = nearest(index, a, s.vision, (b, d) => b.alive && predators.includes(b.species) && visible(w, b, d));
+  const threat = nearest(index, a, s.vision, (b, d) => b.alive && predators.includes(b.species) && sees(w, a, b, d));
   if (!threat) return false;
   a.state = 'flee';
   a.heading = Math.atan2(a.y - threat.y, a.x - threat.x) + (w.rand() - 0.5) * 0.4;
@@ -260,8 +260,9 @@ function tryFlee(w: World, index: Index, a: Animal, s: SpeciesStats): boolean {
   return true;
 }
 
-function visible(w: World, b: Animal, dist: number): boolean {
-  return dist <= FOREST_SIGHT || w.terrain[cellOf(w, b.x, b.y)] !== FOREST;
+// Forest hides animals beyond close range, and nothing is seen across water.
+function sees(w: World, a: Animal, b: Animal, dist: number): boolean {
+  return (dist <= FOREST_SIGHT || w.terrain[cellOf(w, b.x, b.y)] !== FOREST) && overLand(w, a.x, a.y, b.x, b.y);
 }
 
 // Keeps drinking once started until thirst is gone.
@@ -334,7 +335,6 @@ function tryScavenge(w: World, a: Animal, s: SpeciesStats): boolean {
   return true;
 }
 
-// Food across water would pin an animal against the shore, so only straight paths over land count.
 function overLand(w: World, x0: number, y0: number, x1: number, y1: number): boolean {
   const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0));
   for (let i = 1; i < n; i++) {
@@ -346,7 +346,7 @@ function overLand(w: World, x0: number, y0: number, x1: number, y1: number): boo
 function tryHunt(w: World, index: Index, a: Animal, s: SpeciesStats): boolean {
   const pack = Object.keys(s.packHunt).length ? packmates(index, a) : 0;
   const canTake = (b: Animal) => b.age < STATS[b.species].maturity || pack >= (s.packHunt[b.species] ?? 0);
-  const target = nearest(index, a, s.vision, (b, d) => b.alive && s.prey.includes(b.species) && visible(w, b, d) && canTake(b) && overLand(w, a.x, a.y, b.x, b.y));
+  const target = nearest(index, a, s.vision, (b, d) => b.alive && s.prey.includes(b.species) && sees(w, a, b, d) && canTake(b));
   if (!target) return false;
   a.state = 'hunt';
   if (Math.hypot(target.x - a.x, target.y - a.y) <= CATCH_DIST) {
@@ -387,7 +387,7 @@ function bestGrass(w: World, a: Animal, r: number): { x: number; y: number } | n
       const g = plantAt(w, plants, i).value;
       if (g === 0) continue;
       const score = g - Math.hypot(x - cx, y - cy) * 0.1 + w.rand() * 0.05;
-      if (score > bestScore) {
+      if (score > bestScore && overLand(w, a.x, a.y, x + 0.5, y + 0.5)) {
         bestScore = score;
         best = { x: x + 0.5, y: y + 0.5 };
       }
