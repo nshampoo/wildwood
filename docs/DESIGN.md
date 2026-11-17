@@ -59,14 +59,14 @@ Animals also have thirst. It rises each tick (rabbits die after 800 ticks withou
 
 ### Presets
 
-Tested slider settings with starting animals and a "what to watch for" line. `npm run stability` runs each on 10 seeds it was never tuned on, for 40,000 ticks, and checks how many keep both species.
+Tested slider settings with starting animals and a "what to watch for" line. `npm run stability` runs each on 10 seeds it was never tuned on, for 40,000 ticks, and checks how many keep every species they started with.
 
-| Preset | Tuning seeds | Held-out seeds | Minimum the test requires |
+| Preset | Held-out, rabbits and foxes | Held-out, with deer | Minimum the test requires |
 | --- | --- | --- | --- |
-| Balanced meadow | 19/20 | 10/10 | 70% |
-| Lake country | 8/10 | 9/10 | 70% |
-| Watering hole | 8/10 | 8/10 | 60% |
-| Harsh winters | 5/10 | 6/10 | none, unstable on purpose |
+| Balanced meadow | 9/10 | 10/10 | 70% |
+| Lake country | 10/10 | 10/10 | 70% |
+| Watering hole | 9/10 | 9/10 | 60% |
+| Harsh winters | 6/10 | 8/10 | none, unstable on purpose |
 
 ### Time
 
@@ -119,7 +119,7 @@ S3 storage and CloudFront for a small static site are cents per month. No backen
 Based on [RESEARCH.md](RESEARCH.md). In steps, each tuned and stability-checked on its own:
 
 1. **Scent fields** instead of fixed home ranges (done). Foxes drift toward rabbits, rabbits away from foxes, and animals ready to breed toward their own kind, so a lone fox no longer wanders off and dies.
-2. **Deer and scavenging** (done, tuning). Deer eat browse, a second plant layer that grows only in forest, and breed slowly (one fawn a year, mature at 1500 ticks). They flock, so herds form. A dead deer leaves a carcass worth 400 energy that rots over about 2700 ticks; foxes smell it from 25 cells and share it. Rabbits stay a single meal.
+2. **Deer and scavenging** (done). Deer eat browse, a second plant layer that grows only in forest, and breed slowly (one fawn a year, mature at 1500 ticks). They flock, so herds form. A dead deer leaves a carcass worth 400 energy that rots over about 2700 ticks; foxes smell it from 25 cells and share it. Rabbits stay a single meal.
 3. **Coyotes.** Packs flock together. They hunt rabbits alone, but need packmates nearby to take a fawn, and the pack shares the carcass. Foxes flee coyotes, so coyotes push foxes off carcasses. Young coyotes disperse like foxes.
 
 Engine changes this needs:
@@ -148,6 +148,7 @@ Dropped: voles (mostly "smaller rabbits" in a sim; deer and coyotes give predato
 - 2026-11-16: Deer eat only browse. When they also grazed, they stripped the meadows, rabbits moved into the forest to eat, and foxes starved next to rabbits they couldn't see.
 - 2026-11-16: Rabbits have no maturity delay (it halved rabbits on dry maps and starved foxes); foxes mature at 800 ticks, deer at 1500. Placed animals start as adults. Bigger fox litters made crashes worse, so litters stay at 1.
 - 2026-11-16: Grass growth stays as is. Faster regrowth (1.3x, 1.6x) gave more rabbits and deer but bigger fox swings, the paradox of enrichment.
+- 2026-11-16: Held-out survival with deer, all three species required: 10, 10, 9, 8 of 10. Deer carcasses carry foxes through Harsh winters.
 - 2026-11-16: Held-out survival with scent alone: 9, 10, 9, 6 of 10.
 - 2026-11-16: Scent fields over fixed home ranges or memory: one rule covers food, fear, and finding mates, and it can be shown on the map. Flocking only for deer and coyotes, the real pack animals. On the tuning seeds, survival rose to 10, 10, 9, and 8 of 10 (Balanced, Lake, Watering hole, Harsh winters), from about 9.5, 8, 8, and 5.
 - 2026-11-16: Balanced meadow overfit: 9/10 on its tuning seeds, 5/10 on held-out ones. Many small forest patches (patchiness 0.7) fixed it: 19/20 tuning, 10/10 held out.
