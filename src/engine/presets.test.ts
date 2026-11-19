@@ -40,6 +40,6 @@ describe.skipIf(!process.env.STABILITY)('preset stability', () => {
       for (let seed = 1001; seed < 1001 + SEEDS; seed++) if (survives(preset, seed)) alive++;
       console.log(`${preset.name}: ${alive}/${SEEDS}`);
       expect(alive / SEEDS).toBeGreaterThanOrEqual(MIN_SURVIVAL[preset.name]);
-    }, 1_200_000);
+    }, 3_600_000);
   }
 });

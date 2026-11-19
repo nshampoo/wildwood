@@ -14,7 +14,7 @@ None. Everything is generated from a seed and the lever settings.
 
 ### World
 
-- A grid of cells (start around 120 x 80). Each cell has a terrain type and a grass amount (0 to 1).
+- A grid of cells, 180 x 120 (started at 120 x 80). Each cell has a terrain type and a grass amount (0 to 1).
 - Terrain: meadow (grass grows), forest (grass grows at 40%, and animals in it can't be seen from more than 1.5 cells away), water (impassable, and animals must drink from it).
 - Terrain comes from seeded value noise (two octaves) so it looks natural. Water and forest are cut by quantile, so the sliders set exact fractions. Patchiness sets the noise feature size (40 cells down to 8).
 - A distance-to-water field is computed once per world (breadth-first search out from every water cell). Thirsty animals step to the neighbor cell closest to water, so they never need to search.
@@ -55,18 +55,18 @@ Animals also have thirst. It rises each tick (rabbits die after 800 ticks withou
 - World (applies on New world): water, forest, patchiness.
 - Climate (live): rainfall (0.5 is normal growth; 0 stops it) and seasons (growth swings around normal over a 4000-tick year; at 1 it stops in deep winter).
 - Randomize picks values within sensible ranges, so it rarely hands you a dead world.
-- Click on land to place rabbits or foxes.
+- Click on land to place any species.
 
 ### Presets
 
 Tested slider settings with starting animals and a "what to watch for" line. `npm run stability` runs each on 10 seeds it was never tuned on, for 40,000 ticks, and checks how many keep every species they started with.
 
-| Preset | Held-out, rabbits and foxes | Held-out, with deer | Minimum the test requires |
-| --- | --- | --- | --- |
-| Balanced meadow | 9/10 | 10/10 | 70% |
-| Lake country | 10/10 | 10/10 | 70% |
-| Watering hole | 9/10 | 9/10 | 60% |
-| Harsh winters | 6/10 | 8/10 | none, unstable on purpose |
+| Preset | Rabbits and foxes | With deer | With coyotes, 180 x 120 | Minimum the test requires |
+| --- | --- | --- | --- | --- |
+| Balanced meadow | 9/10 | 10/10 | 10/10 | 70% |
+| Lake country | 10/10 | 10/10 | 9/10 | 70% |
+| Watering hole | 9/10 | 9/10 | 6/10 | 60% |
+| Harsh winters | 6/10 | 8/10 | 9/10 | none, unstable on purpose |
 
 ### Time
 
@@ -114,13 +114,15 @@ Dependencies: `vite`, `typescript`, `vitest`, all dev only.
 
 S3 storage and CloudFront for a small static site are cents per month. No backend.
 
-## In progress: scent, deer, coyotes, and scavenging
+## Scent, deer, coyotes, and scavenging (done)
 
 Based on [RESEARCH.md](RESEARCH.md). In steps, each tuned and stability-checked on its own:
 
 1. **Scent fields** instead of fixed home ranges (done). Foxes drift toward rabbits, rabbits away from foxes, and animals ready to breed toward their own kind, so a lone fox no longer wanders off and dies.
 2. **Deer and scavenging** (done). Deer eat browse, a second plant layer that grows only in forest, and breed slowly (one fawn a year, mature at 1500 ticks). They flock, so herds form. A dead deer leaves a carcass worth 400 energy that rots over about 2700 ticks; foxes smell it from 25 cells and share it. Rabbits stay a single meal.
-3. **Coyotes.** Packs flock together. They hunt rabbits alone, but need packmates nearby to take a fawn, and the pack shares the carcass. Foxes flee coyotes, so coyotes push foxes off carcasses. Young coyotes disperse like foxes.
+3. **Coyotes** (done). Packs flock together and hold big territories (no breeding with 3 others within 30 cells). They prefer rabbits, then deer, then foxes. A lone coyote takes fawns; an adult deer needs two packmates, and the pack shares the carcass. Foxes flee coyotes, so coyotes push foxes off carcasses. Deer have twins to keep up.
+4. **Carcasses from every natural death** (done). Starvation, thirst, and old age leave a carcass; small prey caught by a predator is eaten whole. Rabbit crashes become food for predators.
+5. **No sight across water** (done). Prey, predators, mates, grass, and carcasses on the far side of water are ignored, so animals don't pin themselves against a shore.
 
 Engine changes this needs:
 
@@ -135,6 +137,12 @@ Dropped: voles (mostly "smaller rabbits" in a sim; deer and coyotes give predato
 
 ## Decided
 
+- 2026-11-17: Map grows to 180 x 120. Small populations died of bad luck; on a bigger map, packs and herds in different areas rise and fall out of sync and re-seed each other. About 3 ms per tick. Starting animals scale with area.
+- 2026-11-17: Coyotes hunt everything, in preference order, in packs of about 3. Bigger packs meant ~120 coyotes, and foxes spent so much energy fleeing that they bled out. Fear without kills did no better than kills, so the number of coyotes was the lever, not their menu.
+- 2026-11-17: Deer have twins. Coyotes taking fawns, not adults, wiped out deer on dry maps; requiring bigger packs for adults changed nothing.
+- 2026-11-17: Watering hole stays at forest 0.35. More forest (0.45) scored 6/6 on tuning seeds but 4/10 held out, against 6/10 without it. It's the weakest preset with coyotes, right at its 60% minimum.
+- 2026-11-17: Natural deaths leave carcasses for every species. With coyotes, survival went from 1 of 6 to 4 of 6 worlds.
+- 2026-11-17: Animals can't see across water. They were pinned against shores chasing carcasses and mates on the far side.
 - 2026-11-16: Name is Wildwood.
 - 2026-11-16: Rabbits, foxes, and grass to start.
 - 2026-11-16: No evolution. Fixed stats per species; populations drive the dynamics.
@@ -161,3 +169,5 @@ Dropped: voles (mostly "smaller rabbits" in a sim; deer and coyotes give predato
 
 - Where the pixel sprite art comes from: hand-drawn, a free-licensed pack, or generated.
 - Chart table view (an accessible alternative to the canvas chart). Skipped for now.
+- Fox and coyote breeding caps are hard walls, which looks odd when a group stops breeding. A soft version (breeding gets less likely with more neighbors) may read better.
+- Finding mates by scent alone instead of a long-range search. A first test kept all species alive on 6 of 8 worlds; a "ready to breed" scent layer would be the cleaner version.
